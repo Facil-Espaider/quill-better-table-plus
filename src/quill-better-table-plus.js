@@ -4,7 +4,7 @@ import TableSelection from './modules/table-selection'
 import TableOperationMenu from './modules/table-operation-menu'
 
 // import table node matchers
-import { matchTable, matchTableCell, matchTableHeader } from './utils/node-matchers'
+import { matchTable, matchTableCell, matchTableHeader, matchElement } from './utils/node-matchers'
 
 import { getEventComposedPath } from './utils/index'
 import {
@@ -487,11 +487,11 @@ function makeTableArrowHandler(up) {
   };
 }
 
-function isTableCell(blot) {
+export function isTableCell(blot) {
   return blot.statics.blotName === TableCell.blotName
 }
 
-function isInTableCell(current) {
+export function isInTableCell(current) {
   return current && current.parent
     ? isTableCell(current.parent)
       ? true
