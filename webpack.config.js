@@ -30,7 +30,7 @@ module.exports = (env, argv) => {
 
     output: {
       filename: '[name]',
-      library: 'quillBetterTablePlus',
+      library: 'QuillBetterTablePlus',
       libraryExport: 'default',
       libraryTarget: 'umd',
       path: path.resolve(__dirname, './dist/'),

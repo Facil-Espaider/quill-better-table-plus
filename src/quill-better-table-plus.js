@@ -43,35 +43,15 @@ class BetterTable extends Module {
   constructor(quill, options) {
     super(quill, options);
 
-    // handle click on quill-better-table
+    // event click on quill-better-table
     this.quill.root.addEventListener('click', (evt) => {
-      // bugfix: evt.path is undefined in Safari, FF, Micro Edge
-      const path = getEventComposedPath(evt)
-
-      if (!path || path.length <= 0) return
-
-      const tableNode = path.filter(node => {
-        return node.tagName &&
-          node.tagName.toUpperCase() === 'TABLE' &&
-          node.classList.contains('quill-better-table')
-      })[0]
-
-      if (tableNode) {
-        // current table clicked
-        if (this.table === tableNode) return
-        // other table clicked
-        if (this.table) this.hideTableTools()
-        this.showTableTools(tableNode, quill, options)
-      } else if (this.table) {
-        // other clicked
-        this.hideTableTools()
-      }
+      this.#handlerClick(evt);      
     }, false)
-
+    
     // handle right click on quill-better-table
     this.quill.root.addEventListener('contextmenu', (evt) => {
-      if (!this.table) return true
-      evt.preventDefault()
+      if (!this.table && !this.#handlerClick(evt))
+        return true;
 
       // bugfix: evt.path is undefined in Safari, FF, Micro Edge
       const path = getEventComposedPath(evt)
@@ -100,7 +80,7 @@ class BetterTable extends Module {
         .includes(cellNode)
 
       if (this.tableSelection.selectedTds.length <= 0 ||
-        !isTargetCellSelected) {
+        !isTargetCellSelected && "getBoundingClientRect" in cellNode) {
         this.tableSelection.setSelection(
           cellNode.getBoundingClientRect(),
           cellNode.getBoundingClientRect()
@@ -119,7 +99,7 @@ class BetterTable extends Module {
           top: evt.pageY,
         }, quill, options.operationMenu)
       }
-    }, false)
+    }, false);    
 
     // add keyboard binding：Backspace
     // prevent user hits backspace to delete table cell
@@ -156,6 +136,32 @@ class BetterTable extends Module {
     quill.clipboard.matchers = quill.clipboard.matchers.filter(matcher => {
       return matcher[0] !== 'tr'
     })
+  }
+
+  // handle click on quill-better-table
+  #handlerClick(evt){
+    // bugfix: evt.path is undefined in Safari, FF, Micro Edge
+    const path = getEventComposedPath(evt)
+
+    if (!path || path.length <= 0) return
+
+    const tableNode = path.filter(node => {
+      return node.tagName &&
+        node.tagName.toUpperCase() === 'TABLE' &&
+        node.classList.contains('quill-better-table')
+    })[0]
+
+    if (tableNode) {
+      // current table clicked
+      if (this.table === tableNode) return;
+      // other table clicked
+      if (this.table) this.hideTableTools();
+      this.showTableTools(tableNode, this.quill, this.options);
+      return true;
+    } else if (this.table) {
+      // other clicked
+      this.hideTableTools();
+    }
   }
 
   getTable(range = this.quill.getSelection()) {

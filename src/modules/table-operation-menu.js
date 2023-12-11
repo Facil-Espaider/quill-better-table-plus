@@ -269,9 +269,12 @@ export default class TableOperationMenu {
     this.colorSubTitle = options.color && options.color.text ? options.color.text : DEFAULT_COLOR_SUBTITLE
     this.cellColors = options.color && options.color.colors ? options.color.colors : DEFAULT_CELL_COLORS
 
-    this.menuInitial(params)
-    this.mount()
-    document.addEventListener("click", this.destroyHandler, false)
+    if(options.operationMenu){
+      this.menuInitial(params);
+      this.mount();
+      document.addEventListener("click", this.destroyHandler, false);
+    }
+    
   }
 
   mount() {
@@ -279,9 +282,11 @@ export default class TableOperationMenu {
   }
 
   destroy() {
-    this.domNode.remove()
-    document.removeEventListener("click", this.destroyHandler, false)
-    return null
+    if(this.options.operationMenu){    
+      this.domNode.remove();
+      document.removeEventListener("click", this.destroyHandler, false);
+      return null;
+    }
   }
 
   menuInitial({ table, left, top }) {
