@@ -251,7 +251,21 @@ const MENU_ITEMS_DEFAULT = {
       this.quill.update(Quill.sources.USER)
     },
   },
-}
+};
+
+const MENU_COLORS = {
+  formatColor: {
+    text: 'Change cell color',
+    handler(color) {
+      const selectedTds = this.tableSelection.selectedTds
+      if (selectedTds && selectedTds.length > 0) {
+        selectedTds.forEach(tableCell => {
+          tableCell.format('cell-bg', color)
+        })
+      }
+    },
+  },
+};
 
 export default class TableOperationMenu {
   constructor(params, quill, options) {
@@ -261,6 +275,7 @@ export default class TableOperationMenu {
     this.quill = quill
     this.options = options
     this.menuItems = Object.assign({}, MENU_ITEMS_DEFAULT, options.items)
+    this.menuColors = MENU_COLORS;
     this.tableColumnTool = betterTableModule.columnTool
     this.boundary = this.tableSelection.boundary
     this.selectedTds = this.tableSelection.selectedTds
@@ -360,12 +375,7 @@ export default class TableOperationMenu {
       box.style.backgroundColor = color
 
       box.addEventListener('click', function () {
-        const selectedTds = self.tableSelection.selectedTds
-        if (selectedTds && selectedTds.length > 0) {
-          selectedTds.forEach(tableCell => {
-            tableCell.format('cell-bg', color)
-          })
-        }
+        MENU_COLORS[formatColor].handler.bind(self)(color);
       }, false)
 
       return box
