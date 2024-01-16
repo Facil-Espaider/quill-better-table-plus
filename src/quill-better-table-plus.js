@@ -75,6 +75,9 @@ class BetterTable extends Module {
           node.getAttribute('data-row')
       })[0]
 
+      if(!cellNode)
+        return true;      
+
       let isTargetCellSelected = this.tableSelection.selectedTds
         .map(tableCell => tableCell.domNode)
         .includes(cellNode)
