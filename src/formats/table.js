@@ -21,6 +21,7 @@ const CELL_DEFAULT = {
 class TableCellLine extends Block {
   static create(value) {
     const node = super.create(value)
+    node.setAttribute("contenteditable", true);
 
     CELL_IDENTITY_KEYS.forEach(key => {
       let identityMaker = key === 'row'
@@ -125,7 +126,8 @@ class TableCell extends Container {
   static create(value) {
     const node = super.create(value)
     node.setAttribute("data-row", value.row)
-
+    node.setAttribute("contenteditable", false);
+    
     CELL_ATTRIBUTES.forEach(attrName => {
       if (value[attrName]) {
         node.setAttribute(attrName, value[attrName])
