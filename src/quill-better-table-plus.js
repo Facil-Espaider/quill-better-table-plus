@@ -275,6 +275,17 @@ class BetterTable extends Module {
     this.tableInsertRow("below");
   }
 
+  insertEmptyRowUp(table, refRow) {
+    table.insertEmptyRow(refRow, false);
+    this.quill.update('page-break');
+  }
+
+  insertEmptyRowDown(table, refRow) {
+    table.insertEmptyRow(refRow, true);
+    this.quill.update('page-break');
+  }
+
+
   deleteRow() {
     const tableContainer = Quill.find(this.table);
     const tableSelection = this.tableSelection;

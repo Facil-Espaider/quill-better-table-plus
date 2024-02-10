@@ -776,6 +776,36 @@ class TableContainer extends Container {
     return affectedCells
   }
 
+  insertEmptyRow(refRow, isDown) {
+    const [body] = this.descendants(TableBody);
+    if (body == null || body.children.head == null) return;
+
+    //Criando a nova linha (tr) da tabela
+    const rId = table_rowId();
+    const newRow = this.scroll.create(TableRow.blotName, {
+      row: rId
+    });
+
+    //Criando a nova célula (td) da tabela
+    const cId = table_cellId();
+    const colspan = this.colGroup().length();
+    const tableCell = this.scroll.create(TableCell.blotName, Object.assign({}, CELL_DEFAULT, {
+      row: rId,
+      colspan: colspan
+    }));
+    const cellLine = this.scroll.create(TableCellLine.blotName, { row: rId, cell: cId, colspan: colspan });
+    const empty = this.scroll.create(Break.blotName);
+    cellLine.appendChild(empty);
+    tableCell.appendChild(cellLine);
+    newRow.appendChild(tableCell);
+
+    if (isDown) {
+      body.insertBefore(newRow, refRow.next);
+    } else {
+      body.insertBefore(newRow, refRow);
+    }
+  }
+  
   mergeCells(compareRect, mergingCells, rowspan, colspan, editorWrapper) {
     const mergedCell = mergingCells.reduce((result, tableCell, index) => {
       if (index !== 0) {
