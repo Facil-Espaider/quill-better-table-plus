@@ -781,13 +781,13 @@ class TableContainer extends Container {
     if (body == null || body.children.head == null) return;
 
     //Criando a nova linha (tr) da tabela
-    const rId = table_rowId();
+    const rId = rowId();
     const newRow = this.scroll.create(TableRow.blotName, {
       row: rId
     });
 
     //Criando a nova célula (td) da tabela
-    const cId = table_cellId();
+    const cId = cellId();
     const colspan = this.colGroup().length();
     const tableCell = this.scroll.create(TableCell.blotName, Object.assign({}, CELL_DEFAULT, {
       row: rId,
