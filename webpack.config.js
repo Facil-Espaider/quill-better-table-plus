@@ -3,6 +3,7 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 const jsRules = {
   test: /\.js$/,
@@ -108,12 +109,10 @@ const baseConfig = {
       template: './demo/demo.html',
       filename: 'demo/demo.html',
     }),
-
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[name].[id].css',
     }),
-
     new webpack.HotModuleReplacementPlugin({}),
   ],
   devServer: {
@@ -140,6 +139,7 @@ module.exports = env => {
       devtool: false,      
       optimization: {
         minimizer: [
+          new TerserPlugin(),
           new CssMinimizerPlugin(),
         ],
       },
