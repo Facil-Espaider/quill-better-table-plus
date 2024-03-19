@@ -17,6 +17,9 @@ const CELL_DEFAULT = {
   rowspan: 1,
   colspan: 1,
 }
+const CELL_FORMAT_DEFAULT = {
+  padding: '0pt 5.4pt 0pt 5.4pt',
+}
 
 class TableCellLine extends Block {
   static create(value) {
@@ -30,20 +33,22 @@ class TableCellLine extends Block {
     })
 
     CELL_ATTRIBUTES.forEach(attrName => {
-      node.setAttribute(`data-${attrName}`, value[attrName] || CELL_DEFAULT[attrName])
+      node.setAttribute(`data-${attrName}`, value[attrName] || CELL_DEFAULT[attrName]);    
     })
 
     if (value['cell-bg']) {
       node.setAttribute('data-cell-bg', value['cell-bg'])
     }
 
+    node.setAttribute('data-padding', value.padding || CELL_FORMAT_DEFAULT.padding);    
     return node
   }
 
   static formats(domNode) {
     const formats = {}
+    let cellLineAttributes = CELL_ATTRIBUTES.concat(CELL_IDENTITY_KEYS).concat(['cell-bg']).concat(['padding']);
 
-    return CELL_ATTRIBUTES.concat(CELL_IDENTITY_KEYS).concat(['cell-bg']).reduce((formats, attribute) => {
+    return cellLineAttributes.reduce((formats, attribute) => {
       if (domNode.hasAttribute(`data-${attribute}`)) {
         formats[attribute] = domNode.getAttribute(`data-${attribute}`) || undefined
       }
@@ -52,7 +57,7 @@ class TableCellLine extends Block {
   }
 
   format(name, value) {
-    if (CELL_ATTRIBUTES.concat(CELL_IDENTITY_KEYS).indexOf(name) > -1) {
+    if (CELL_ATTRIBUTES.concat(CELL_IDENTITY_KEYS).concat('padding').indexOf(name) > -1) {
       if (value) {
         this.domNode.setAttribute(`data-${name}`, value)
       } else {
@@ -86,6 +91,7 @@ class TableCellLine extends Block {
     const rowspan = this.domNode.getAttribute('data-rowspan')
     const colspan = this.domNode.getAttribute('data-colspan')
     const cellBg = this.domNode.getAttribute('data-cell-bg')
+    const paddingCell = this.domNode.getAttribute('data-padding')
     if (this.statics.requiredContainer &&
       !(this.parent instanceof this.statics.requiredContainer)) {
       this.wrap(this.statics.requiredContainer.blotName, {
@@ -93,6 +99,7 @@ class TableCellLine extends Block {
         colspan,
         rowspan,
         'cell-bg': cellBg,
+        padding: paddingCell,
       })
     }
     super.optimize(context)
@@ -123,10 +130,13 @@ class TableCell extends Container {
     return false
   }
 
-  static create(value) {
-    const node = super.create(value)
+  static create(value) {    
+    const node = super.create(value)    
+    let valuePadding = value.padding || CELL_FORMAT_DEFAULT.padding;
     node.setAttribute("data-row", value.row)
     node.setAttribute("contenteditable", false);
+    node.setAttribute("data-padding", valuePadding);
+    node.style.padding = valuePadding;
     
     CELL_ATTRIBUTES.forEach(attrName => {
       if (value[attrName]) {
@@ -144,13 +154,17 @@ class TableCell extends Container {
 
   static formats(domNode) {
     const formats = {}
-
+        
     if (domNode.hasAttribute("data-row")) {
       formats.row = domNode.getAttribute("data-row")
     }
 
     if (domNode.hasAttribute("data-cell-bg")) {
       formats["cell-bg"] = domNode.getAttribute("data-cell-bg")
+    }
+
+    if (domNode.hasAttribute("data-padding")) {
+      formats.padding = domNode.getAttribute("data-padding")
     }
 
     return CELL_ATTRIBUTES.reduce((formats, attribute) => {
@@ -171,9 +185,13 @@ class TableCell extends Container {
 
   formats() {
     const formats = {}
-
+    
     if (this.domNode.hasAttribute("data-row")) {
       formats.row = this.domNode.getAttribute("data-row")
+    }
+
+    if (this.domNode.hasAttribute("data-padding")) {
+      formats.padding = this.domNode.getAttribute("data-padding")   
     }
 
     if (this.domNode.hasAttribute("data-cell-bg")) {
@@ -207,7 +225,7 @@ class TableCell extends Container {
     if (CELL_ATTRIBUTES.indexOf(name) > -1) {
       this.toggleAttribute(name, value)
       this.formatChildren(name, value)
-    } else if (['row'].indexOf(name) > -1) {
+    } else if ('row' === name) {
       this.toggleAttribute(`data-${name}`, value)
       this.formatChildren(name, value)
     } else if (name === 'cell-bg') {
@@ -219,7 +237,12 @@ class TableCell extends Container {
       } else {
         this.domNode.style.backgroundColor = 'initial'
       }
-    } else {
+    } else if(name === 'padding'){
+      this.toggleAttribute('data-padding', value);
+      this.formatChildren(name, value);
+
+      this.domNode.style.padding = value ?? CELL_FORMAT_DEFAULT.padding;
+    } else{    
       super.format(name, value)
     }
   }
