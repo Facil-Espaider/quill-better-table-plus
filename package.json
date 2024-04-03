@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "webpack server --config webpack.config.js --mode=development",
     "build": "npm run build:normal && npm run build:minimize",
-    "build:normal": "webpack --config webpack.config.js",
-    "build:minimize": "webpack --config webpack.config.js --env minimize",
+    "build:dev": "webpack --config webpack.config.js",
+    "build:prod": "webpack --config webpack.config.js --env minimize",
     "lint": "eslint --fix --ext js,es6 src",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
