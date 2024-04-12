@@ -5,7 +5,7 @@
   "main": "dist/quill-better-table-plus.js",
   "scripts": {
     "dev": "webpack server --config webpack.config.js --mode=development",
-    "build": "npm run build:normal && npm run build:minimize",
+    "build": "npm run build:dev && npm run build:prod",
     "build:dev": "webpack --config webpack.config.js",
     "build:prod": "webpack --config webpack.config.js --env minimize",
     "lint": "eslint --fix --ext js,es6 src",

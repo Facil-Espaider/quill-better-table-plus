@@ -133,7 +133,7 @@ module.exports = env => {
       ...prodConfig,
       mode: 'production',
       entry: {
-        'quill-better-table-plus.min.js': ['./src/quill-better-table-plus.js'],
+        'quill-better-table-plus.js': ['./src/quill-better-table-plus.js'],
         'quill-better-table-plus': './src/assets/quill-better-table-plus.less',
     },
       devtool: false,      
