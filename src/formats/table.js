@@ -825,7 +825,7 @@ class TableContainer extends Container {
     if (isDown) {
       body.insertBefore(newRow, refRow.next);
     } else {
-      body.insertBefore(newRow, refRow);
+      refRow.parent.insertBefore(newRow, refRow);
     }
   }
   
