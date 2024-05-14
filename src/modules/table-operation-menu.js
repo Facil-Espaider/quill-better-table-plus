@@ -169,20 +169,20 @@ const MENU_ITEMS_DEFAULT = {
         return sum
       }, 0)
       
-        let quantityManageElements = (this.selectedTds.length / rowspan);
-        let isRowspan = rowspan > 1;
-        this.selectedTds.forEach((tableCell, index) => {        
-          let tableCellLine = tableCell.children;
-          if(tableCellLine.length > 1 || index === 0 || 
-            (isRowspan && index >= quantityManageElements)){
-            return;
-          }
+        // let quantityManageElements = (this.selectedTds.length / rowspan);
+        // let isRowspan = rowspan > 1;
+        // this.selectedTds.forEach((tableCell, index) => {        
+        //   let tableCellLine = tableCell.children;
+        //   if(tableCellLine.length > 1 || index === 0 || 
+        //     (isRowspan && index >= quantityManageElements)){
+        //     return;
+        //   }
   
-          let indexTableCellLine = this.quill.getIndex(tableCellLine.head);
-          if (tableCellLine.head.domNode.innerText === '\n') {
-            this.quill.deleteText(indexTableCellLine, 1);
-          }
-        });      
+        //   let indexTableCellLine = this.quill.getIndex(tableCellLine.head);
+        //   if (tableCellLine.head.domNode.innerText === '\n') {
+        //     this.quill.deleteText(indexTableCellLine, 1);
+        //   }
+        // });      
 
       const mergedCell = tableContainer.mergeCells(
         this.boundary,
