@@ -168,22 +168,7 @@ const MENU_ITEMS_DEFAULT = {
         }
         return sum
       }, 0)
-      
-        // let quantityManageElements = (this.selectedTds.length / rowspan);
-        // let isRowspan = rowspan > 1;
-        // this.selectedTds.forEach((tableCell, index) => {        
-        //   let tableCellLine = tableCell.children;
-        //   if(tableCellLine.length > 1 || index === 0 || 
-        //     (isRowspan && index >= quantityManageElements)){
-        //     return;
-        //   }
-  
-        //   let indexTableCellLine = this.quill.getIndex(tableCellLine.head);
-        //   if (tableCellLine.head.domNode.innerText === '\n') {
-        //     this.quill.deleteText(indexTableCellLine, 1);
-        //   }
-        // });      
-
+            
       const mergedCell = tableContainer.mergeCells(
         this.boundary,
         this.selectedTds,
@@ -191,6 +176,8 @@ const MENU_ITEMS_DEFAULT = {
         colspan,
         this.quill.root.parentNode
       )
+
+      removeAdditionalEmptyRowsFromTableCell(this.selectedTds[0].domNode);
       this.quill.update(Quill.sources.USER)
       this.tableSelection.setSelection(
         mergedCell.domNode.getBoundingClientRect(),
@@ -281,6 +268,32 @@ const MENU_COLORS = {
     },
   },
 };
+
+function removeAdditionalEmptyRowsFromTableCell(tdElement) {
+  var pElements = tdElement.querySelectorAll('p');
+
+  // Remove parágrafos em branco no início
+  for (let i = 0; i < pElements.length; i++) {
+      if (tdElement.querySelectorAll('p').length <= 1) {
+          break;
+      } else if (pElements[i].innerText.trim() !== '') {
+          break;
+      } else {
+          pElements[i].remove();
+      }
+  }
+
+    // Remove parágrafos em branco no final
+  for (let i = pElements.length - 1; i >= 0; i--) {
+      if (tdElement.querySelectorAll('p').length <= 1) {
+          break;
+      } else if (pElements[i].innerText.trim() !== '') {
+          break;
+      } else {
+          pElements[i].remove();
+      }
+  }
+}
 
 export default class TableOperationMenu {
   constructor(params, quill, options) {
