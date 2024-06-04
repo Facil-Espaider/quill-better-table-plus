@@ -406,17 +406,65 @@ class TableContainer extends Container {
     this.updateTableWidth()
   }
 
+  optimize(context){
+    setTimeout(() => {
+      let colGroup = this.domNode.querySelector('colgroup');
+      if (!colGroup) {
+        colGroup = document.createElement('colgroup');    
+        const rows = this.domNode.getElementsByTagName('tr');
+        let maxTdCount = 0;
+
+        Array.from(rows).forEach(row => {
+          const tds = row.getElementsByTagName('td');
+          if (tds.length > maxTdCount) {
+            maxTdCount = tds.length;
+          }
+        });
+
+        for (let i = 0; i < maxTdCount; i++) {
+          let col = document.createElement('col');
+          col.setAttribute('width', '100');
+          colGroup.appendChild(col);
+        }
+
+        const firstChild = this.domNode.firstChild;
+        this.domNode.insertBefore(colGroup, firstChild);
+      } 
+    }, 0);
+    super.optimize(context);
+  }
+
   updateTableWidth() {
     setTimeout(() => {
       const colGroup = this.colGroup()
       if (!colGroup) return
-      const tableWidth = colGroup.children.reduce((sumWidth, col) => {
-        sumWidth = sumWidth + parseInt(col.formats()[TableCol.blotName].width, 10)
-        return sumWidth
+      var cols = [];
+      let tableWidth = colGroup.children.reduce((sumWidth, col) => {
+          sumWidth = sumWidth + parseInt(col.formats()[TableCol.blotName].width, 10);
+          cols.add(col);
+        return sumWidth;
       }, 0)
-      this.domNode.style.width = `${tableWidth}px`
-    }, 0)
-  }
+
+      const elEditorSections = document.getElementsByClassName('ql-editor editor-sections')[0];
+      const styleEditorSections = window.getComputedStyle(elEditorSections);
+      const paddingLeft = parseFloat(styleEditorSections.paddingLeft);
+      const paddingRight = parseFloat(styleEditorSections.paddingRight);
+      const larguraTotal = elEditorSections.getBoundingClientRect().width;
+      const containerWidth = larguraTotal - paddingLeft - paddingRight;
+      if (tableWidth > containerWidth) {
+            const scale = containerWidth / tableWidth;
+            tableWidth = 0;
+            cols.forEach(col => {
+                const colWidth = parseInt(col.domNode.width, 10);
+                const newColWidth = Math.floor(colWidth * scale);
+                col.domNode.width = newColWidth;
+                tableWidth += newColWidth;
+            });
+        }
+
+        this.domNode.style.width  = `${tableWidth}px`;
+    }, 0);
+}
 
   cells(column) {
     return this.rows().map(row => row.children.at(column))
@@ -684,6 +732,24 @@ class TableContainer extends Container {
 
     // insert new tableCol
     const tableCol = this.scroll.create(TableCol.blotName, true)
+    const elCols = this.domNode.querySelectorAll("td");
+    let countColspan = 0;
+    let widthCol = 0;
+    let selectedColumnIsMerged = false;
+    for (let i = 0; i <= colIndex; i++) {
+      let colspan = parseInt(elCols[i].getAttribute("colspan") || 1);
+      if (countColspan + colspan >= colIndex){
+        if (colspan > 1 || selectedColumnIsMerged){
+          widthCol += parseFloat(tableColGroup.domNode.childNodes[i].width);
+          selectedColumnIsMerged = true;
+        }else{
+          widthCol = parseFloat(tableColGroup.domNode.childNodes[i].width);
+        }
+      }
+      countColspan += parseInt(colspan);
+    }
+
+    tableCol.domNode.width = widthCol;
     let colRef = isRight ? tableCols[colIndex].next : tableCols[colIndex]
     if (colRef) {
       tableColGroup.insertBefore(tableCol, colRef)
