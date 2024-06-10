@@ -440,7 +440,7 @@ class TableContainer extends Container {
       if (!colGroup) return
       var cols = [];
       let tableWidth = colGroup.children.reduce((sumWidth, col) => {
-          sumWidth = sumWidth + parseInt(col.formats()[TableCol.blotName].width, 10);
+          sumWidth = sumWidth + parseFloat(col.formats()[TableCol.blotName].width);
           cols.add(col);
         return sumWidth;
       }, 0)
@@ -450,7 +450,7 @@ class TableContainer extends Container {
       const paddingLeft = parseFloat(styleEditorSections.paddingLeft);
       const paddingRight = parseFloat(styleEditorSections.paddingRight);
       const larguraTotal = elEditorSections.getBoundingClientRect().width;
-      const containerWidth = larguraTotal - paddingLeft - paddingRight;
+      const containerWidth = Math.floor(larguraTotal - paddingLeft - paddingRight);
       if (tableWidth > containerWidth) {
             const scale = containerWidth / tableWidth;
             tableWidth = 0;
