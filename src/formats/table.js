@@ -436,8 +436,8 @@ class TableContainer extends Container {
 
   updateTableWidth() {
     setTimeout(() => {
-      const colGroup = this.colGroup()
-      if (!colGroup) return
+      const colGroup = this.colGroup();
+      if (!colGroup) return;
       var cols = [];
       let tableWidth = colGroup.children.reduce((sumWidth, col) => {
           sumWidth = sumWidth + parseFloat(col.formats()[TableCol.blotName].width);
@@ -455,8 +455,8 @@ class TableContainer extends Container {
             const scale = containerWidth / tableWidth;
             tableWidth = 0;
             cols.forEach(col => {
-                const colWidth = parseInt(col.domNode.width, 10);
-                const newColWidth = Math.floor(colWidth * scale);
+                const colWidth = parseFloat(col.domNode.width, 10);
+                const newColWidth = colWidth * scale;
                 col.domNode.width = newColWidth;
                 tableWidth += newColWidth;
             });
