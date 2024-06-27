@@ -146,8 +146,8 @@ const MENU_ITEMS_DEFAULT = {
           this.quill.root.parentNode
         )
         if (
-          rowRect.y > this.boundary.y - ERROR_LIMIT &&
-          rowRect.y + rowRect.height < this.boundary.y + this.boundary.height + ERROR_LIMIT
+          rowRect.y >= this.boundary.y - ERROR_LIMIT &&
+          rowRect.y + rowRect.height <= this.boundary.y + this.boundary.height + ERROR_LIMIT
         ) {
           sum += 1
         }
@@ -161,14 +161,14 @@ const MENU_ITEMS_DEFAULT = {
           this.quill.root.parentNode
         )
         if (
-          cellRect.x > this.boundary.x - ERROR_LIMIT &&
-          cellRect.x + cellRect.width < this.boundary.x + this.boundary.width + ERROR_LIMIT
+          cellRect.x >= this.boundary.x - ERROR_LIMIT &&
+          cellRect.x + cellRect.width <= this.boundary.x + this.boundary.width + ERROR_LIMIT
         ) {
           sum += 1
         }
         return sum
       }, 0)
-            
+
       const mergedCell = tableContainer.mergeCells(
         this.boundary,
         this.selectedTds,
