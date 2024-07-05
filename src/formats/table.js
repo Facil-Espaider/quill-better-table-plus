@@ -462,7 +462,7 @@ class TableContainer extends Container {
             });
         }
 
-        this.domNode.style.width  = `${tableWidth}px`;
+        //this.domNode.style.width  = `${tableWidth}px`;
     }, 0);
 }
 
