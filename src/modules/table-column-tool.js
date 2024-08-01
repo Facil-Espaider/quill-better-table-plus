@@ -16,7 +16,7 @@ export default class TableColumnTool {
   initColTool() {
     const parent = this.quill.root.parentNode
     const containerRect = parent.getBoundingClientRect()
-    const tableViewRect = this.table.parentNode.getBoundingClientRect()
+    const tableViewRect = this.table.getBoundingClientRect()
 
     this.domNode = document.createElement('div')
     this.domNode.classList.add('qlbt-col-tool')
@@ -25,7 +25,7 @@ export default class TableColumnTool {
     css(this.domNode, {
       width: `${tableViewRect.width}px`,
       height: `${COL_TOOL_HEIGHT}px`,
-      left: `${tableViewRect.left - containerRect.left + parent.scrollLeft}px`,
+      left: `${Math.floor(tableViewRect.left) - containerRect.left + parent.scrollLeft}px`,
       top: `${tableViewRect.top - containerRect.top + parent.scrollTop - COL_TOOL_HEIGHT - 5}px`,
     })
   }

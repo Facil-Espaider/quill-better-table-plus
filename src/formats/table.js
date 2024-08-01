@@ -7,10 +7,13 @@ const Break = Quill.import("blots/break")
 const Block = Quill.import("blots/block")
 const Container = Quill.import("blots/container")
 
-const COL_ATTRIBUTES = ["width"]
+const COL_ATTRIBUTES = ["width", 'table_left_indent', 'table_alignment', 'table_preferred_width'];
 const COL_DEFAULT = {
   width: 100,
-}
+  table_left_indent: 0,
+  table_alignment: 0,
+  table_preferred_width: 0
+};
 const CELL_IDENTITY_KEYS = ["row", "cell"]
 const CELL_ATTRIBUTES = ["rowspan", "colspan"]
 const CELL_DEFAULT = {
@@ -20,6 +23,13 @@ const CELL_DEFAULT = {
 const CELL_FORMAT_DEFAULT = {
   padding: '0pt 5.4pt 0pt 5.4pt',
 }
+
+const TABLE_ALIGNMENT = {
+  LEFT: '0',
+  CENTER: '1',
+  RIGHT: '2'
+};
+Object.freeze(TABLE_ALIGNMENT);
 
 class TableCellLine extends Block {
   static create(value) {
@@ -40,13 +50,33 @@ class TableCellLine extends Block {
       node.setAttribute('data-cell-bg', value['cell-bg'])
     }
 
+    node.setAttribute('data-cell_vertical_alignment', value['cell_vertical_alignment'] ?? "top");
+    node.setAttribute('data-cell_horizontal_alignment', value['cell_horizontal_alignment'] ?? "left");
+
+    if (value['cell_blc']) 
+      node.setAttribute('data-cell_blc', value['cell_blc']);
+    if (value['cell_brc']) 
+      node.setAttribute('data-cell_brc', value['cell_brc']);
+    if (value['cell_btc']) 
+      node.setAttribute('data-cell_btc', value['cell_btc']);
+    if (value['cell_bbc']) 
+        node.setAttribute('data-cell_bbc', value['cell_bbc']);
+
+    node.setAttribute('data-cell_bts', value['cell_bts'] ?? 1);
+    node.setAttribute('data-cell_bbs', value['cell_bbs'] ?? 1);
+    node.setAttribute('data-cell_brs', value['cell_brs'] ?? 1);
+    node.setAttribute('data-cell_bls', value['cell_bls'] ?? 1);
+    node.setAttribute('data-row_height', value['row_height'] ?? 0);
     node.setAttribute('data-padding', value.padding || CELL_FORMAT_DEFAULT.padding);    
     return node
   }
 
   static formats(domNode) {
     const formats = {}
-    let cellLineAttributes = CELL_ATTRIBUTES.concat(CELL_IDENTITY_KEYS).concat(['cell-bg']).concat(['padding']);
+    let cellLineAttributes = CELL_ATTRIBUTES.concat(CELL_IDENTITY_KEYS).concat(['cell-bg', 'cell_vertical_alignment', 'cell_horizontal_alignment',
+    'cell_btc', 'cell_bbc', 'cell_brc', 'cell_blc',
+    'cell_bts', 'cell_bbs', 'cell_brs', 'cell_bls',
+    'row_height', 'padding']);
 
     return cellLineAttributes.reduce((formats, attribute) => {
       if (domNode.hasAttribute(`data-${attribute}`)) {
@@ -57,7 +87,10 @@ class TableCellLine extends Block {
   }
 
   format(name, value) {
-    if (CELL_ATTRIBUTES.concat(CELL_IDENTITY_KEYS).concat('padding').indexOf(name) > -1) {
+    if (CELL_ATTRIBUTES.concat(CELL_IDENTITY_KEYS).concat(['cell_vertical_alignment', 'cell_horizontal_alignment',
+      'cell_btc', 'cell_bbc', 'cell_brc', 'cell_blc',
+      'cell_bts', 'cell_bbs', 'cell_brs', 'cell_bls',
+      'row_height', 'padding']).indexOf(name) > -1) {
       if (value) {
         this.domNode.setAttribute(`data-${name}`, value)
       } else {
@@ -87,11 +120,22 @@ class TableCellLine extends Block {
   optimize(context) {
     // cover shadowBlot's wrap call, pass params parentBlot initialize
     // needed
-    const rowId = this.domNode.getAttribute('data-row')
-    const rowspan = this.domNode.getAttribute('data-rowspan')
-    const colspan = this.domNode.getAttribute('data-colspan')
-    const cellBg = this.domNode.getAttribute('data-cell-bg')
-    const paddingCell = this.domNode.getAttribute('data-padding')
+    const rowId = this.domNode.getAttribute('data-row');
+    const rowspan = this.domNode.getAttribute('data-rowspan');
+    const colspan = this.domNode.getAttribute('data-colspan');
+    const cellBg = this.domNode.getAttribute('data-cell-bg');
+    const verticalAlignment = this.domNode.getAttribute('data-cell_vertical_alignment');
+    const horizontalAlignment = this.domNode.getAttribute('data-cell_horizontal_alignment');
+    const borderTopColor = this.domNode.getAttribute('data-cell_btc');
+    const borderBottomColor = this.domNode.getAttribute('data-cell_bbc');
+    const borderRightColor = this.domNode.getAttribute('data-cell_brc');
+    const borderLeftColor = this.domNode.getAttribute('data-cell_blc');
+    const borderTopSize = this.domNode.getAttribute('data-cell_bts');
+    const borderBottomSize = this.domNode.getAttribute('data-cell_bbs');
+    const borderRightSize = this.domNode.getAttribute('data-cell_brs');
+    const borderLeftSize = this.domNode.getAttribute('data-cell_bls');
+    const rowHeight = this.domNode.getAttribute('data-row_height');
+    const paddingCell = this.domNode.getAttribute('data-padding');
     if (this.statics.requiredContainer &&
       !(this.parent instanceof this.statics.requiredContainer)) {
       this.wrap(this.statics.requiredContainer.blotName, {
@@ -99,7 +143,18 @@ class TableCellLine extends Block {
         colspan,
         rowspan,
         'cell-bg': cellBg,
-        padding: paddingCell,
+        'cell_vertical_alignment': verticalAlignment,
+    		'cell_horizontal_alignment': horizontalAlignment,
+    		'cell_btc': borderTopColor,
+    		'cell_bbc': borderBottomColor,
+    		'cell_brc': borderRightColor,
+    		'cell_blc': borderLeftColor,
+    		'cell_bts': borderTopSize,
+    		'cell_bbs': borderBottomSize,
+    		'cell_brs': borderRightSize,
+    		'cell_bls': borderLeftSize,
+    		'row_height': rowHeight,
+        padding: paddingCell
       })
     }
     super.optimize(context)
@@ -149,6 +204,92 @@ class TableCell extends Container {
       node.style.backgroundColor = value['cell-bg']
     }
 
+    if (value['cell_vertical_alignment']) {
+      node.setAttribute('data-cell_vertical_alignment', value['cell_vertical_alignment']);
+      switch (value['cell_vertical_alignment'].toUpperCase()) {
+        case 'TOP':
+          node.style.verticalAlign = 'top';
+          break;
+        case 'CENTER':
+          node.style.verticalAlign = 'middle';
+          break;
+        case 'BOTTOM':
+          node.style.verticalAlign = 'bottom';
+          break;
+      }
+    }
+    if (value['cell_horizontal_alignment']) {
+      node.setAttribute('data-cell_horizontal_alignment', value['cell_horizontal_alignment']);
+      switch (value['cell_horizontal_alignment'].toUpperCase()) {
+        case 'CENTER':
+          node.style.textAlign = 'center';
+          break;
+        case 'RIGHT':
+          node.style.textAlign = 'end';
+          break;
+        case 'JUSTIFY':
+          node.style.textAlign = 'justify';
+          break;
+      }
+    }
+
+    if (value['cell_blc']) {
+      node.setAttribute('data-cell_blc', value['cell_blc']);
+      node.style.borderLeftColor = value['cell_blc'];
+      if (value['cell_blc'] == "#FFFFFF" || value['cell_blc'] == "rgb(255, 255, 255)"){
+        node.style.borderLeft = "hidden";
+      }
+    }else{
+      node.style.borderLeft = "none";
+    }
+    if (value['cell_brc']) {
+      node.setAttribute('data-cell_brc', value['cell_brc']);
+      node.style.borderRightColor = value['cell_brc'];
+      if (value['cell_brc'] == "#FFFFFF" || value['cell_brc'] == "rgb(255, 255, 255)"){
+        node.style.borderRight = "hidden";
+      }
+    }else{
+      node.style.borderRight = "none";
+    }
+    if (value['cell_btc']) {
+      node.setAttribute('data-cell_btc', value['cell_btc']);
+      node.style.borderTopColor = value['cell_btc'];
+      if (value['cell_btc'] == "#FFFFFF" || value['cell_btc'] == "rgb(255, 255, 255)"){
+        node.style.borderTop = "hidden";
+      }
+    }else{
+      node.style.borderTop = "none";
+    }
+    if (value['cell_bbc']) {
+      node.setAttribute('data-cell_bbc', value['cell_bbc']);
+      node.style.borderBottomColor = value['cell_bbc'];
+      if (value['cell_bbc'] == "#FFFFFF" || value['cell_bbc'] == "rgb(255, 255, 255)"){
+        node.style.borderBottom = "hidden";
+      }
+    }else{
+      node.style.borderBottom = "none";
+    }
+
+    if (value['cell_bts']) {
+      node.setAttribute('data-cell_bts', value['cell_bts']);
+      node.style.borderTopWidth = `${value['cell_bts']}pt`;
+    }
+    if (value['cell_bbs']) {
+      node.setAttribute('data-cell_bbs', value['cell_bbs']);
+      node.style.borderBottomWidth = `${value['cell_bbs']}pt`;
+    }
+    if (value['cell_brs']) {
+      node.setAttribute('data-cell_brs', value['cell_brs']);
+      node.style.borderRightWidth = `${value['cell_brs']}pt`;
+    }
+    if (value['cell_bls']) {
+      node.setAttribute('data-cell_bls', value['cell_bls']);
+      node.style.borderLeftWidth = `${value['cell_bls']}pt`;
+    }
+    if (value['row_height']) {
+      node.setAttribute('data-row_height', value['row_height']);
+    }
+
     return node
   }
 
@@ -161,6 +302,50 @@ class TableCell extends Container {
 
     if (domNode.hasAttribute("data-cell-bg")) {
       formats["cell-bg"] = domNode.getAttribute("data-cell-bg")
+    }
+
+    if (domNode.hasAttribute('data-cell_vertical_alignment')) {
+      formats['cell_vertical_alignment'] = domNode.getAttribute('data-cell_vertical_alignment');
+    }
+
+    if (domNode.hasAttribute('data-cell_horizontal_alignment')) {
+      formats['cell_horizontal_alignment'] = domNode.getAttribute('data-cell_horizontal_alignment');
+    }
+
+    if (domNode.hasAttribute('data-cell_btc')) {
+      formats['cell_btc'] = domNode.getAttribute('data-cell_btc');
+    }
+
+    if (domNode.hasAttribute('data-cell_bbc')) {
+      formats['cell_bbc'] = domNode.getAttribute('data-cell_bbc');
+    }
+
+    if (domNode.hasAttribute('data-cell_brc')) {
+      formats['cell_brc'] = domNode.getAttribute('data-cell_brc');
+    }
+
+    if (domNode.hasAttribute('data-cell_blc')) {
+      formats['cell_blc'] = domNode.getAttribute('data-cell_blc');
+    }
+
+    if (domNode.hasAttribute('data-cell_bts')) {
+      formats['cell_bts'] = domNode.getAttribute('data-cell_bts');
+    }
+
+    if (domNode.hasAttribute('data-cell_bbs')) {
+      formats['cell_bbs'] = domNode.getAttribute('data-cell_bbs');
+    }
+
+    if (domNode.hasAttribute('data-cell_brs')) {
+      formats['cell_brs'] = domNode.getAttribute('data-cell_brs');
+    }
+
+    if (domNode.hasAttribute('data-cell_bls')) {
+      formats['cell_bls'] = domNode.getAttribute('data-cell_bls');
+    }
+
+    if (domNode.hasAttribute('data-row_height')) {
+      formats['row_height'] = domNode.getAttribute('data-row_height');
     }
 
     if (domNode.hasAttribute("data-padding")) {
@@ -198,6 +383,50 @@ class TableCell extends Container {
       formats["cell-bg"] = this.domNode.getAttribute("data-cell-bg")
     }
 
+    if (this.domNode.hasAttribute('data-cell_vertical_alignment')) {
+      formats['cell_vertical_alignment'] = this.domNode.getAttribute('data-cell_vertical_alignment');
+    }
+
+    if (this.domNode.hasAttribute('data-cell_horizontal_alignment')) {
+      formats['cell_horizontal_alignment'] = this.domNode.getAttribute('data-cell_horizontal_alignment');
+    }
+
+    if (this.domNode.hasAttribute('data-cell_btc')) {
+      formats['cell_btc'] = this.domNode.getAttribute('data-cell_btc');
+    }
+
+    if (this.domNode.hasAttribute('data-cell_bbc')) {
+      formats['cell_bbc'] = this.domNode.getAttribute('data-cell_bbc');
+    }
+
+    if (this.domNode.hasAttribute('data-cell_brc')) {
+      formats['cell_brc'] = this.domNode.getAttribute('data-cell_brc');
+    }
+
+    if (this.domNode.hasAttribute('data-cell_blc')) {
+      formats['cell_blc'] = this.domNode.getAttribute('data-cell_blc');
+    }
+
+    if (this.domNode.hasAttribute('data-cell_bts')) {
+      formats['cell_bts'] = this.domNode.getAttribute('data-cell_bts');
+    }
+
+    if (this.domNode.hasAttribute('data-cell_bbs')) {
+      formats['cell_bbs'] = this.domNode.getAttribute('data-cell_bbs');
+    }
+
+    if (this.domNode.hasAttribute('data-cell_brs')) {
+      formats['cell_brs'] = this.domNode.getAttribute('data-cell_brs');
+    }
+
+    if (this.domNode.hasAttribute('data-cell_bls')) {
+      formats['cell_bls'] = this.domNode.getAttribute('data-cell_bls');
+    }
+
+    if (this.domNode.hasAttribute('data-row_height')) {
+      formats['row_height'] = this.domNode.getAttribute('data-row_height');
+    }
+
     return CELL_ATTRIBUTES.reduce((formats, attribute) => {
       if (this.domNode.hasAttribute(attribute)) {
         formats[attribute] = this.domNode.getAttribute(attribute)
@@ -223,40 +452,218 @@ class TableCell extends Container {
 
   format(name, value) {
     if (CELL_ATTRIBUTES.indexOf(name) > -1) {
-      this.toggleAttribute(name, value)
-      this.formatChildren(name, value)
-    } else if ('row' === name) {
-      this.toggleAttribute(`data-${name}`, value)
-      this.formatChildren(name, value)
+      this.toggleAttribute(name, value);
+      this.formatChildren(name, value);
+    } else if (['row'].indexOf(name) > -1) {
+      this.toggleAttribute("data-".concat(name), value);
+      this.formatChildren(name, value);
     } else if (name === 'cell-bg') {
-      this.toggleAttribute('data-cell-bg', value)
-      this.formatChildren(name, value)
+      this.toggleAttribute('data-cell-bg', value);
+      this.formatChildren(name, value);
 
       if (value) {
-        this.domNode.style.backgroundColor = value
+        this.domNode.style.backgroundColor = value;
       } else {
-        this.domNode.style.backgroundColor = 'initial'
+        this.domNode.style.backgroundColor = 'initial';
       }
+    } else if (name === 'cell_vertical_alignment') {
+      this.toggleAttribute('data-cell_vertical_alignment', value);
+      this.formatChildren(name, value);
+
+      switch (value.toUpperCase()) {
+        case 'TOP':
+          this.domNode.style.verticalAlign = 'top';
+          break;
+        case 'CENTER':
+          this.domNode.style.verticalAlign = 'middle';
+          break;
+        case 'BOTTOM':
+          this.domNode.style.verticalAlign = 'bottom';
+          break;
+        default:
+          this.domNode.style.verticalAlign = 'initial';
+          break;
+      }
+    } else if (name === 'cell_horizontal_alignment') {
+      this.toggleAttribute('data-cell_horizontal_alignment', value);
+      this.formatChildren(name, value);
+
+      switch (value.toUpperCase()) {
+        case 'CENTER':
+          this.domNode.style.textAlign = 'center';
+          break;
+        case 'RIGHT':
+          this.domNode.style.textAlign = 'end';
+          break;
+        case 'JUSTIFY':
+          this.domNode.style.textAlign = 'justify';
+          break;
+        default:
+          this.domNode.style.textAlign = 'initial';
+          break;
+      }
+    } else if (name === 'cell_btc') {
+      this.toggleAttribute('data-cell_btc', value);
+      this.formatChildren(name, value);
+
+      if (value) {
+        this.domNode.style.borderTopColor = value;
+      } else {
+        this.domNode.style.borderTopColor = 'initial';
+      }
+
+      if (this.domNode.style.borderTop?.includes('none')) {
+        this.domNode.style.borderTop = this.domNode.style.borderTop?.replace('none', '').trim();
+      }
+      if (value == "#FFFFFF" || value == "rgb(255, 255, 255)"){
+        this.domNode.style.borderTop += "hidden";
+        return;
+      }
+      if (this.domNode.style.borderTop?.includes('hidden')) {
+		    this.domNode.style.borderTop = this.domNode.style.borderTop?.replace('hidden', '').trim();
+		    this.domNode.style.borderTopStyle = this.domNode.style.borderTopStyle?.replace('initial', '').trim();
+        this.domNode.style.borderTopWidth = this.domNode.style.borderTopWidth?.replace('initial', '').trim();
+	    }
+    } else if (name === 'cell_bbc') {
+      this.toggleAttribute('data-cell_bbc', value);
+      this.formatChildren(name, value);
+
+      if (value) {
+        this.domNode.style.borderBottomColor = value;
+      } else {
+        this.domNode.style.borderBottomColor = 'initial';
+      }
+
+      if (this.domNode.style.borderBottom?.includes('none')) {
+        this.domNode.style.borderBottom = this.domNode.style.borderBottom?.replace('none', '').trim();
+      }
+      if (value == "#FFFFFF" || value == "rgb(255, 255, 255)"){
+        this.domNode.style.borderBottom += "hidden";
+        return;
+      }
+      if (this.domNode.style.borderBottom?.includes('hidden')) {
+		    this.domNode.style.borderBottom = this.domNode.style.borderBottom?.replace('hidden', '').trim();
+        this.domNode.style.borderBottomStyle = this.domNode.style.borderBottomStyle?.replace('initial', '').trim();
+        this.domNode.style.borderBottomWidth = this.domNode.style.borderBottomWidth?.replace('initial', '').trim();
+	    }
+    } else if (name === 'cell_brc') {
+      this.toggleAttribute('data-cell_brc', value);
+      this.formatChildren(name, value);
+
+      if (value) {
+        this.domNode.style.borderRightColor = value;
+      } else {
+        this.domNode.style.borderRightColor = 'initial';
+      }
+
+      if (this.domNode.style.borderRight?.includes('none')) {
+        this.domNode.style.borderRight = this.domNode.style.borderRight?.replace('none', '').trim();
+      }
+      if (value == "#FFFFFF" || value == "rgb(255, 255, 255)"){
+        this.domNode.style.borderRight += "hidden";
+        return;
+      }
+      if (this.domNode.style.borderRight?.includes('hidden')) {
+		    this.domNode.style.borderRight = this.domNode.style.borderRight?.replace('hidden', '').trim();
+        this.domNode.style.borderRightStyle = this.domNode.style.borderRightStyle?.replace('initial', '').trim();
+        this.domNode.style.borderRightWidth = this.domNode.style.borderRightWidth?.replace('initial', '').trim();
+	    }
+    } else if (name === 'cell_blc') {
+      this.toggleAttribute('data-cell_blc', value);
+      this.formatChildren(name, value);
+
+      if (value) {
+        this.domNode.style.borderLeftColor = value;
+      } else {
+        this.domNode.style.borderLeftColor = 'initial';
+      }
+
+      if (this.domNode.style.borderLeft?.includes('none')) {
+        this.domNode.style.borderLeft = this.domNode.style.borderLeft?.replace('none', '').trim();
+      }
+      if (value == "#FFFFFF" || value == "rgb(255, 255, 255)"){
+        this.domNode.style.borderLeft += "hidden";
+        return;
+      }
+      if (this.domNode.style.borderLeft?.includes('hidden')) {
+		    this.domNode.style.borderLeft = this.domNode.style.borderLeft?.replace('hidden', '').trim();
+        this.domNode.style.borderLeftStyle = this.domNode.style.borderLeftStyle?.replace('initial', '').trim();
+        this.domNode.style.borderLeftWidth = this.domNode.style.borderLeftWidth?.replace('initial', '').trim();
+	    }
+    } else if (name === 'cell_bts') {
+      this.toggleAttribute('data-cell_bts', value);
+      this.formatChildren(name, value);
+
+      if (value) {
+        this.domNode.style.borderTopWidth = `${value}pt`;
+      } else {
+        this.domNode.style.borderTopWidth = 'initial';
+      }
+    } else if (name === 'cell_bbs') {
+      this.toggleAttribute('data-cell_bbs', value);
+      this.formatChildren(name, value);
+
+      if (value) {
+        this.domNode.style.borderBottomWidth = `${value}pt`;
+      } else {
+        this.domNode.style.borderBottomWidth = 'initial';
+      }
+    } else if (name === 'cell_brs') {
+      this.toggleAttribute('data-cell_brs', value);
+      this.formatChildren(name, value);
+
+      if (value) {
+        this.domNode.style.borderRightWidth = `${value}pt`;
+      } else {
+        this.domNode.style.borderRightWidth = 'initial';
+      }
+    } else if (name === 'cell_bls') {
+      this.toggleAttribute('data-cell_bls', value);
+      this.formatChildren(name, value);
+
+      if (value) {
+        this.domNode.style.borderLeftWidth = `${value}pt`;
+      } else {
+        this.domNode.style.borderLeftWidth = 'initial';
+      }
+    } else if (name === 'row_height') {
+      this.toggleAttribute('data-row_height', value);
+      const currentRow = this.row();
+      const rowNode = currentRow.domNode;
+      rowNode.setAttribute('data-row_height', value);
+      if (value) {
+        rowNode.style.setProperty('height', `${convertPointToPixel(value)}px`);
+      } else {
+        rowNode.style.removeProperty('height');
+      }
+
+      this.formatChildren(name, value);
     } else if(name === 'padding'){
       this.toggleAttribute('data-padding', value);
       this.formatChildren(name, value);
 
       this.domNode.style.padding = value ?? CELL_FORMAT_DEFAULT.padding;
-    } else{    
-      super.format(name, value)
+    } else{
+      if (super.format){
+        super.format(name, value)
+      }else{
+        this.formatChildren(name, value);
+      }
     }
   }
 
   optimize(context) {
-    const rowId = this.domNode.getAttribute("data-row")
+    const rowId = this.domNode.getAttribute("data-row");
+    const rowHeight = this.domNode.getAttribute("data-row_height");
 
-    if (this.statics.requiredContainer &&
-      !(this.parent instanceof this.statics.requiredContainer)) {
+    if (this.statics.requiredContainer && !(this.parent instanceof this.statics.requiredContainer)) {
       this.wrap(this.statics.requiredContainer.blotName, {
         row: rowId,
-      })
+        'row_height': rowHeight
+      });
     }
-    super.optimize(context)
+
+    super.optimize(context);
   }
 
   row() {
@@ -298,16 +705,23 @@ class TableRow extends Container {
   static create(value) {
     const node = super.create(value)
     node.setAttribute("data-row", value.row)
+
+    if (value.row_height) {
+      node.setAttribute("data-row_height", value.row_height);
+      node.style.setProperty('height', `${convertPointToPixel(value.row_height)}px`);
+    }
+
     return node
   }
 
   formats() {
-    return ["row"].reduce((formats, attrName) => {
-      if (this.domNode.hasAttribute(`data-${attrName}`)) {
-        formats[attrName] = this.domNode.getAttribute(`data-${attrName}`)
-      }
-      return formats
-    }, {})
+    return ["row", 'row_height'].reduce((formats, attrName) => {
+    	if (this.domNode.hasAttribute("data-".concat(attrName))) {
+    		formats[attrName] = this.domNode.getAttribute("data-".concat(attrName));
+    	}
+
+      return formats;
+    }, {});
   }
 
   optimize(context) {
@@ -403,7 +817,8 @@ class TableContainer extends Container {
 
   constructor(scroll, domNode) {
     super(scroll, domNode)
-    this.updateTableWidth()
+    this.applyStylesToTable();
+    this.updateTableWidth();
   }
 
   optimize(context){
@@ -464,8 +879,131 @@ class TableContainer extends Container {
 
         //this.domNode.style.width  = `${tableWidth}px`;
     }, 0);
-}
+  }
 
+  applyStylesToTable() {
+    setTimeout(() => {
+      if (!document.contains(this.domNode)) return;
+      const colGroup = this.colGroup();
+      if (!colGroup) return;
+
+      const firstCol = colGroup.children.head;
+      if (firstCol && firstCol.formats) {
+        const formats = firstCol.formats();
+
+        const tableMarginLeft = formats[TableCol.blotName].table_left_indent;
+        const tableAlignment = formats[TableCol.blotName].table_alignment;
+
+        this.setTableMarginLeft(tableMarginLeft);
+        this.setTableAlignment(tableAlignment);
+        this.fixCellBorderPriority();
+      }
+    }, 0);
+  }
+
+  fixCellBorderPriority(){
+    const tableCells = this.descendants(TableCell).reverse();
+    tableCells.forEach(cell => {
+    if (cell.domNode.hasAttribute('data-cell_btc')){
+      const rowIndex = this.rows().indexOf(cell.row()) - 1;
+      this.formatCellBorderTopAndBottom(rowIndex, cell, 'cell_bbc');
+    }
+    if (cell.domNode.hasAttribute('data-cell_blc')){
+      const colIndex = cell.cellOffset() - 1;
+      this.formatCellBorderLeftAndRight(colIndex, cell, 'cell_brc');
+    }
+    });
+  }
+
+  formatCellBorderLeftAndRight(cell, formatBorder){
+    let rect = cell.domNode.getBoundingClientRect();
+    let endY = rect.top + rect.height;
+    let cellX = formatBorder === 'cell_blc' ? rect.left + rect.width: rect.left;
+    let cellsChange = [];
+    let selectedCellChange = null;
+    const cells = Array.from(this.descendants(TableCell));
+    for (let i = 0; i < cells.length; i++) {
+        let cellChange = cells[i];
+        let rectCellChange = cellChange.domNode.getBoundingClientRect();
+        let endYCellChange = rectCellChange.top + rectCellChange.height;
+        let cellChangeX = formatBorder === 'cell_blc' ? rectCellChange.left : rectCellChange.left + rectCellChange.width;
+        let selectedCellChangeX = formatBorder === 'cell_blc' ? selectedCellChange?.domNode.getBoundingClientRect().left : selectedCellChange?.domNode.getBoundingClientRect().left + selectedCellChange?.domNode.getBoundingClientRect().width;
+
+        if (rectCellChange.top < endY && endYCellChange > rect.top) {
+            if (selectedCellChangeX === cellX) {
+                cellsChange.push(selectedCellChange);
+                selectedCellChange = null;
+            }
+
+            if (cellChangeX <= cellX) {
+                if (!selectedCellChange || cellChangeX > selectedCellChangeX) {
+                    selectedCellChange = cellChange;
+                }
+            }
+        }
+    }
+
+    cellsChange.forEach(selectedCell => {
+        selectedCell.format(formatBorder, cell.domNode.getAttribute('data-' + (formatBorder === 'cell_blc' ? 'cell_brc' : 'cell_blc')));
+    });
+  }
+  
+  formatCellBorderTopAndBottom(cell, formatBorder){
+      let rect = cell.domNode.getBoundingClientRect();                                                                        
+      let endX = rect.left + rect.width;
+      let cellY = formatBorder === 'cell_bbc' ? rect.top : rect.bottom;
+      let cellsChange = [];
+      let selectedCellChange = null;
+      const cells = Array.from(this.descendants(TableCell));
+      for (let i = 0; i < cells.length; i++) {
+        let cellChange = cells[i];
+        let rectCellChange = cellChange.domNode.getBoundingClientRect();
+        let endXCellChange = rectCellChange.left + rectCellChange.width;
+        let cellChangeY = formatBorder === 'cell_bbc' ? rectCellChange.bottom : rectCellChange.top;
+        let selectedCellChangeY = formatBorder === 'cell_bbc' ? selectedCellChange?.domNode.getBoundingClientRect().bottom : selectedCellChange?.domNode.getBoundingClientRect().top;
+
+        if (rectCellChange.left < endX && endXCellChange > rect.left) {
+          if (selectedCellChangeY === cellY ) {
+            cellsChange.push(selectedCellChange);
+            selectedCellChange = null;
+          }
+
+          if (cellChangeY <= cellY) {
+            if (!selectedCellChange || cellChangeY > selectedCellChangeY) {
+              selectedCellChange = cellChange;
+            }
+          }
+        }
+      }
+
+    cellsChange.forEach(selectedCell => {
+      selectedCell.format(formatBorder, cell.domNode.getAttribute('data-' + (formatBorder === 'cell_bbc' ? 'cell_btc' : 'cell_bbc')));
+    });
+  }
+
+  setTableMarginLeft(tableMarginLeft) {
+    if (tableMarginLeft) {
+      this.domNode.style.setProperty('margin-left', ''.concat(tableMarginLeft, 'pt'));
+    }
+  }
+
+  setTableAlignment(tableAlignment) {
+    switch (tableAlignment) {
+      case TABLE_ALIGNMENT.CENTER:
+        this.domNode.parentNode.classList.add('table-alignment-center');
+        this.domNode.parentNode.classList.remove('table-alignment-right');
+        break;
+      case TABLE_ALIGNMENT.RIGHT:
+        this.domNode.parentNode.classList.add('table-alignment-right');
+        this.domNode.parentNode.classList.remove('table-alignment-center');
+        break;
+      default:
+        this.domNode.parentNode.classList.remove('table-alignment-center');
+        this.domNode.parentNode.classList.remove('table-alignment-right');
+        break;
+    }
+  }
+  
   cells(column) {
     return this.rows().map(row => row.children.at(column))
   }
@@ -642,11 +1180,19 @@ class TableContainer extends Container {
       TableCell.blotName,
       Object.assign({}, CELL_DEFAULT, {
         row: rId,
+        cell_btc: '#000000',
+        cell_bbc: '#000000',
+        cell_brc: '#000000',
+        cell_blc: '#000000',
       })
     )
     const cellLine = this.scroll.create(TableCellLine.blotName, {
       row: rId,
       cell: id,
+      cell_btc: '#000000',
+      cell_bbc: '#000000',
+      cell_brc: '#000000',
+      cell_blc: '#000000'
     })
     tableCell.appendChild(cellLine)
 
@@ -713,12 +1259,20 @@ class TableContainer extends Container {
         Object.assign({}, CELL_DEFAULT, {
           row: rId,
           rowspan: cellFormats.rowspan,
+          cell_btc: '#000000',
+          cell_bbc: '#000000',
+          cell_brc: '#000000',
+          cell_blc: '#000000',
         })
       )
       const cellLine = this.scroll.create(TableCellLine.blotName, {
         row: rId,
         cell: id,
         rowspan: cellFormats.rowspan,
+        cell_btc: '#000000',
+        cell_bbc: '#000000',
+        cell_brc: '#000000',
+        cell_blc: '#000000'
       })
       tableCell.appendChild(cellLine)
 
@@ -827,12 +1381,16 @@ class TableContainer extends Container {
       const cellFormats = cell.formats()
 
       const tableCell = this.scroll.create(TableCell.blotName, Object.assign(
-        {}, CELL_DEFAULT, { row: rId, colspan: cellFormats.colspan }
+        {}, CELL_DEFAULT, { row: rId, colspan: cellFormats.colspan, cell_btc: '#000000', cell_bbc: '#000000', cell_brc: '#000000', cell_blc: '#000000' }
       ))
       const cellLine = this.scroll.create(TableCellLine.blotName, {
         row: rId,
         cell: cId,
         colspan: cellFormats.colspan,
+        cell_btc: '#000000',
+        cell_bbc: '#000000',
+        cell_brc: '#000000',
+        cell_blc: '#000000'
       })
       const empty = this.scroll.create(Break.blotName)
       cellLine.appendChild(empty)
@@ -880,9 +1438,13 @@ class TableContainer extends Container {
     const colspan = this.colGroup().length();
     const tableCell = this.scroll.create(TableCell.blotName, Object.assign({}, CELL_DEFAULT, {
       row: rId,
-      colspan: colspan
+      colspan: colspan,
+      cell_btc: '#000000',
+      cell_bbc: '#000000',
+      cell_brc: '#000000',
+      cell_blc: '#000000',
     }));
-    const cellLine = this.scroll.create(TableCellLine.blotName, { row: rId, cell: cId, colspan: colspan });
+    const cellLine = this.scroll.create(TableCellLine.blotName, { row: rId, cell: cId, colspan: colspan, cell_btc: '#000000', cell_bbc: '#000000', cell_brc: '#000000', cell_blc: '#000000'});
     const empty = this.scroll.create(Break.blotName);
     cellLine.appendChild(empty);
     tableCell.appendChild(cellLine);

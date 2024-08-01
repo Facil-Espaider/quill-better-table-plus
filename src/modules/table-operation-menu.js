@@ -194,7 +194,8 @@ const MENU_ITEMS_DEFAULT = {
       tableContainer.unmergeCells(
         this.selectedTds,
         this.quill.root.parentNode
-      )
+      );
+      tableContainer.fixCellBorderPriority();
       this.quill.update(Quill.sources.USER)
       this.tableSelection.clearSelection()
     },
@@ -299,6 +300,7 @@ export default class TableOperationMenu {
   constructor(params, quill, options) {
     const betterTableModule = quill.getModule('better-table-plus')
     this.tableSelection = betterTableModule.tableSelection
+    this.tableSelection.table = params.table
     this.table = params.table
     this.quill = quill
     this.options = options

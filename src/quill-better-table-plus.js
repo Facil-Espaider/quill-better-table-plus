@@ -202,7 +202,15 @@ class BetterTable extends Module {
     delta = new Array(rows).fill(0).reduce(memo => {
       let tableRowId = rowId()
       return new Array(columns).fill('\n').reduce((memo, text) => {
-        memo.insert(text, { 'table-cell-line': { row: tableRowId, cell: cellId() } });
+        memo.insert(text, { 'table-cell-line': { row: tableRowId, cell: cellId(),   							
+          cell_btc: '#000000',
+          cell_bbc: '#000000',
+          cell_brc: '#000000',
+          cell_blc: '#000000',
+          cell_bts: '1',
+          cell_bbs: '1',
+          cell_brs: '1',
+          cell_bls: '1',} });
         return memo
       }, memo)
     }, delta)
