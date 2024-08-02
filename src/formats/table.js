@@ -905,80 +905,54 @@ class TableContainer extends Container {
     const tableCells = this.descendants(TableCell).reverse();
     tableCells.forEach(cell => {
     if (cell.domNode.hasAttribute('data-cell_btc')){
-      const rowIndex = this.rows().indexOf(cell.row()) - 1;
-      this.formatCellBorderTopAndBottom(rowIndex, cell, 'cell_bbc');
+      this.formatCellBorderTopAndBottom(cell, 'cell_bbc', true);
     }
     if (cell.domNode.hasAttribute('data-cell_blc')){
-      const colIndex = cell.cellOffset() - 1;
-      this.formatCellBorderLeftAndRight(colIndex, cell, 'cell_brc');
+      this.formatCellBorderLeftAndRight(cell, 'cell_brc', true);
     }
     });
   }
 
-  formatCellBorderLeftAndRight(cell, formatBorder){
+  formatCellBorderLeftAndRight(cell, formatBorder, fixCellBorderPriority){
+    fixCellBorderPriority = fixCellBorderPriority ?? false;
     let rect = cell.domNode.getBoundingClientRect();
     let endY = rect.top + rect.height;
     let cellX = formatBorder === 'cell_blc' ? rect.left + rect.width: rect.left;
-    let cellsChange = [];
-    let selectedCellChange = null;
     const cells = Array.from(this.descendants(TableCell));
     for (let i = 0; i < cells.length; i++) {
         let cellChange = cells[i];
         let rectCellChange = cellChange.domNode.getBoundingClientRect();
         let endYCellChange = rectCellChange.top + rectCellChange.height;
         let cellChangeX = formatBorder === 'cell_blc' ? rectCellChange.left : rectCellChange.left + rectCellChange.width;
-        let selectedCellChangeX = formatBorder === 'cell_blc' ? selectedCellChange?.domNode.getBoundingClientRect().left : selectedCellChange?.domNode.getBoundingClientRect().left + selectedCellChange?.domNode.getBoundingClientRect().width;
 
-        if (rectCellChange.top < endY && endYCellChange > rect.top) {
-            if (selectedCellChangeX === cellX) {
-                cellsChange.push(selectedCellChange);
-                selectedCellChange = null;
-            }
+        if (rectCellChange.top < endY && endYCellChange > rect.top && cellChangeX === cellX) {
+            cellChange.format(formatBorder, cell.domNode.getAttribute('data-' + (formatBorder === 'cell_blc' ? 'cell_brc' : 'cell_blc')));
 
-            if (cellChangeX <= cellX) {
-                if (!selectedCellChange || cellChangeX > selectedCellChangeX) {
-                    selectedCellChange = cellChange;
-                }
-            }
+            if (!fixCellBorderPriority && cellChange.domNode.rowSpan > 1)
+              this.formatCellBorderLeftAndRight(cellChange, formatBorder === 'cell_blc' ? 'cell_brc' : 'cell_blc', true)
         }
     }
-
-    cellsChange.forEach(selectedCell => {
-        selectedCell.format(formatBorder, cell.domNode.getAttribute('data-' + (formatBorder === 'cell_blc' ? 'cell_brc' : 'cell_blc')));
-    });
   }
   
-  formatCellBorderTopAndBottom(cell, formatBorder){
+  formatCellBorderTopAndBottom(cell, formatBorder, fixCellBorderPriority){
+    fixCellBorderPriority = fixCellBorderPriority ?? false;
       let rect = cell.domNode.getBoundingClientRect();                                                                        
       let endX = rect.left + rect.width;
       let cellY = formatBorder === 'cell_bbc' ? rect.top : rect.bottom;
-      let cellsChange = [];
-      let selectedCellChange = null;
       const cells = Array.from(this.descendants(TableCell));
       for (let i = 0; i < cells.length; i++) {
         let cellChange = cells[i];
         let rectCellChange = cellChange.domNode.getBoundingClientRect();
         let endXCellChange = rectCellChange.left + rectCellChange.width;
         let cellChangeY = formatBorder === 'cell_bbc' ? rectCellChange.bottom : rectCellChange.top;
-        let selectedCellChangeY = formatBorder === 'cell_bbc' ? selectedCellChange?.domNode.getBoundingClientRect().bottom : selectedCellChange?.domNode.getBoundingClientRect().top;
 
-        if (rectCellChange.left < endX && endXCellChange > rect.left) {
-          if (selectedCellChangeY === cellY ) {
-            cellsChange.push(selectedCellChange);
-            selectedCellChange = null;
-          }
+        if (rectCellChange.left < endX && endXCellChange > rect.left && cellChangeY === cellY) {
+          cellChange.format(formatBorder, cell.domNode.getAttribute('data-' + (formatBorder === 'cell_bbc' ? 'cell_btc' : 'cell_bbc')));
 
-          if (cellChangeY <= cellY) {
-            if (!selectedCellChange || cellChangeY > selectedCellChangeY) {
-              selectedCellChange = cellChange;
-            }
-          }
+          if (!fixCellBorderPriority && cellChange.domNode.colSpan > 1)
+            this.formatCellBorderTopAndBottom(cellChange, formatBorder === 'cell_bbc' ? 'cell_btc' : 'cell_bbc', true)
         }
       }
-
-    cellsChange.forEach(selectedCell => {
-      selectedCell.format(formatBorder, cell.domNode.getAttribute('data-' + (formatBorder === 'cell_bbc' ? 'cell_btc' : 'cell_bbc')));
-    });
   }
 
   setTableMarginLeft(tableMarginLeft) {
@@ -1003,7 +977,7 @@ class TableContainer extends Container {
         break;
     }
   }
-  
+
   cells(column) {
     return this.rows().map(row => row.children.at(column))
   }
