@@ -773,6 +773,9 @@ class TableCol extends Block {
   static create(value) {
     let node = super.create(value)
     COL_ATTRIBUTES.forEach(attrName => {
+      if (attrName === "width" && value[attrName] && !value[attrName].contains("px"))
+        value[attrName] += "px";
+
       node.setAttribute(`${attrName}`, value[attrName] || COL_DEFAULT[attrName])
     })
     return node
@@ -868,12 +871,12 @@ class TableContainer extends Container {
       const containerWidth = Math.floor(larguraTotal - paddingLeft - paddingRight);
       if (tableWidth > containerWidth) {
             const scale = containerWidth / tableWidth;
-            tableWidth = 0;
+            //tableWidth = 0;
             cols.forEach(col => {
                 const colWidth = parseFloat(col.domNode.width, 10);
                 const newColWidth = colWidth * scale;
-                col.domNode.width = newColWidth;
-                tableWidth += newColWidth;
+                col.domNode.width = newColWidth + "px";
+                //tableWidth += newColWidth;
             });
         }
 
