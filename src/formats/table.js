@@ -826,28 +826,43 @@ class TableContainer extends Container {
 
   optimize(context){
     setTimeout(() => {
-      let colGroup = this.domNode.querySelector('colgroup');
-      if (!colGroup) {
-        colGroup = document.createElement('colgroup');    
+      let colGroup = this.domNode.querySelectorAll('colgroup');
+      if (colGroup.length === 0) {
+        colGroup = document.createElement('colgroup');
         const rows = this.domNode.getElementsByTagName('tr');
         let maxTdCount = 0;
-
+      
         Array.from(rows).forEach(row => {
           const tds = row.getElementsByTagName('td');
           if (tds.length > maxTdCount) {
             maxTdCount = tds.length;
           }
         });
-
+      
         for (let i = 0; i < maxTdCount; i++) {
           let col = document.createElement('col');
           col.setAttribute('width', '100');
           colGroup.appendChild(col);
         }
-
+      
         const firstChild = this.domNode.firstChild;
         this.domNode.insertBefore(colGroup, firstChild);
-      } 
+      } else if (colGroup.length > 1) {
+        for (let i = colGroup.length - 1; i > 0; i--) {
+          colGroup[i].remove();
+        }
+      }
+
+      let tBodies = this.domNode.querySelectorAll('tbody');
+      if (tBodies.length > 1) {
+        let firstTBody = tBodies[0];
+        for (let i = 1; i < tBodies.length; i++) {
+          let currentTBody = tBodies[i];
+          while (currentTBody.rows.length > 0) {
+            firstTBody.appendChild(currentTBody.rows[0]);
+          }
+        }
+      }
     }, 0);
     super.optimize(context);
   }
