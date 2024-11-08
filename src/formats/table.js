@@ -68,6 +68,14 @@ class TableCellLine extends Block {
     node.setAttribute('data-cell_bls', value['cell_bls'] ?? 1);
     node.setAttribute('data-row_height', value['row_height'] ?? 0);
     node.setAttribute('data-padding', value.padding || CELL_FORMAT_DEFAULT.padding);    
+
+    node.style.marginTop = "0px";
+    node.style.marginBottom = "0px";
+    node.style.paddingRight = "0px";
+    node.style.paddingLeft = "0px";
+    node.style.textIndent = "0px";
+    node.style.lineHeight = "1";
+
     return node
   }
 
