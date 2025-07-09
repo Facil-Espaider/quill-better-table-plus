@@ -41,7 +41,7 @@ const MENU_ITEMS_DEFAULT = {
         this.quill.root.parentNode)
 
       this.tableColumnTool.updateToolCells()
-      this.quill.update(Quill.sources.USER)
+      this.quill.update('table')
       this.quill.setSelection(
         this.quill.getIndex(newColumn[0]),
         0,
@@ -75,7 +75,7 @@ const MENU_ITEMS_DEFAULT = {
         this.quill.root.parentNode)
 
       this.tableColumnTool.updateToolCells()
-      this.quill.update(Quill.sources.USER)
+      this.quill.update('table')
       this.quill.setSelection(
         this.quill.getIndex(newColumn[0]),
         0,
@@ -98,7 +98,7 @@ const MENU_ITEMS_DEFAULT = {
         false,
         this.quill.root.parentNode
       )
-      this.quill.update(Quill.sources.USER)
+      this.quill.update('table')
       this.quill.setSelection(
         this.quill.getIndex(affectedCells[0]),
         0,
@@ -121,7 +121,7 @@ const MENU_ITEMS_DEFAULT = {
         true,
         this.quill.root.parentNode
       )
-      this.quill.update(Quill.sources.USER)
+      this.quill.update('table')
       this.quill.setSelection(
         this.quill.getIndex(affectedCells[0]),
         0,
@@ -178,7 +178,7 @@ const MENU_ITEMS_DEFAULT = {
       )
 
       removeAdditionalEmptyRowsFromTableCell(this.selectedTds[0].domNode);
-      this.quill.update(Quill.sources.USER)
+      this.quill.update('table')
       this.tableSelection.setSelection(
         mergedCell.domNode.getBoundingClientRect(),
         mergedCell.domNode.getBoundingClientRect()
@@ -196,7 +196,7 @@ const MENU_ITEMS_DEFAULT = {
         this.quill.root.parentNode
       );
       tableContainer.fixCellBorderPriority();
-      this.quill.update(Quill.sources.USER)
+      this.quill.update('table')
       this.tableSelection.clearSelection()
     },
   },
@@ -223,7 +223,7 @@ const MENU_ITEMS_DEFAULT = {
       )
       if (!isDeleteTable) {
         this.tableColumnTool.updateToolCells()
-        this.quill.update(Quill.sources.USER)
+        this.quill.update('table')
         this.tableSelection.clearSelection()
       }
     },
@@ -238,7 +238,7 @@ const MENU_ITEMS_DEFAULT = {
         this.boundary,
         this.quill.root.parentNode
       )
-      this.quill.update(Quill.sources.USER)
+      this.quill.update('table')
       this.tableSelection.clearSelection()
     },
   },
@@ -251,7 +251,7 @@ const MENU_ITEMS_DEFAULT = {
       const tableContainer = Quill.find(this.table)
       betterTableModule.hideTableTools()
       tableContainer.remove()
-      this.quill.update(Quill.sources.USER)
+      this.quill.update('table')
     },
   },
 };

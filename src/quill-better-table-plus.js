@@ -215,7 +215,7 @@ class BetterTable extends Module {
       }, memo)
     }, delta)
 
-    this.quill.updateContents(delta, Quill.sources.USER)
+    this.quill.updateContents(delta, 'table')
     this.quill.setSelection(range.index + columns + 1, Quill.sources.API)
   }
 
@@ -242,7 +242,7 @@ class BetterTable extends Module {
     );
 
     tableColumnTool.updateToolCells();
-    tableSelection.quill.update(Quill.sources.USER);
+    tableSelection.quill.update('table');
     tableSelection.quill.setSelection(tableSelection.quill.getIndex(newColumn[0]), 0, Quill.sources.SILENT);
     tableSelection.setSelection(
       newColumn[0].domNode.getBoundingClientRect(),
@@ -267,7 +267,7 @@ class BetterTable extends Module {
       rowType === "below",
       tableSelection.quill.root.parentNode
     );
-    tableSelection.quill.update(Quill.sources.USER);
+    tableSelection.quill.update('table');
     tableSelection.quill.setSelection(tableSelection.quill.getIndex(affectedCells[0]), 0, Quill.sources.SILENT);
     tableSelection.setSelection(
       affectedCells[0].domNode.getBoundingClientRect(),
@@ -299,7 +299,7 @@ class BetterTable extends Module {
     const tableSelection = this.tableSelection;
 
     tableContainer.deleteRow(tableSelection.boundary, tableSelection.quill.root.parentNode);
-    tableSelection.quill.update(Quill.sources.USER);
+    tableSelection.quill.update('table');
     tableSelection.clearSelection();
   }
 
@@ -325,7 +325,7 @@ class BetterTable extends Module {
     );
     if (!isDeleteTable) {
       tableColumnTool.updateToolCells();
-      tableSelection.quill.update(Quill.sources.USER);
+      tableSelection.quill.update('table');
       tableSelection.clearSelection();
     }
   }
@@ -394,7 +394,7 @@ BetterTable.keyboardBindings = {
         return formats;
       }, {});
       // insert new cellLine with lineFormats
-      this.quill.insertText(range.index, '\n', lineFormats['table-cell-line'], Quill.sources.USER);
+      this.quill.insertText(range.index, '\n', lineFormats['table-cell-line'], 'table');
       // Earlier scroll.deleteAt might have messed up our selection,
       // so insertText's built in selection preservation is not reliable
       this.quill.setSelection(range.index + 1, Quill.sources.SILENT);
@@ -403,7 +403,7 @@ BetterTable.keyboardBindings = {
         if (lineFormats[name] != null) return;
         if (Array.isArray(context.format[name])) return;
         if (name === 'link') return;
-        this.quill.format(name, context.format[name], Quill.sources.USER);
+        this.quill.format(name, context.format[name], 'table');
       });
     },
   },
@@ -422,7 +422,7 @@ BetterTable.keyboardBindings = {
         this.quill.setSelection(
           targetLine.offset(this.quill.scroll),
           0,
-          Quill.sources.USER
+          'table'
         )
 
         return false
@@ -443,7 +443,7 @@ BetterTable.keyboardBindings = {
         this.quill.setSelection(
           targetLine.offset(this.quill.scroll),
           0,
-          Quill.sources.USER
+          'table'
         )
 
         return false
@@ -485,7 +485,7 @@ function makeTableArrowHandler(up) {
         }
 
         const index = targetCell.offset(this.quill.scroll)
-        this.quill.setSelection(index, 0, Quill.sources.USER)
+        this.quill.setSelection(index, 0, 'table')
       } else {
         const targetLine = cell.table().parent[key]
         if (targetLine != null) {
@@ -493,13 +493,13 @@ function makeTableArrowHandler(up) {
             this.quill.setSelection(
               targetLine.offset(this.quill.scroll) + targetLine.length() - 1,
               0,
-              Quill.sources.USER
+              'table'
             )
           } else {
             this.quill.setSelection(
               targetLine.offset(this.quill.scroll),
               0,
-              Quill.sources.USER
+              'table'
             )
           }
         }

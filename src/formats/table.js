@@ -871,6 +871,8 @@ class TableContainer extends Container {
           }
         }
       }
+
+      this.adjustHeightByRowspan();
     }, 0);
     super.optimize(context);
   }
@@ -904,7 +906,45 @@ class TableContainer extends Container {
         }
 
         //this.domNode.style.width  = `${tableWidth}px`;
+        const quill = Quill.find(this.scroll.domNode.parentNode)
+        quill.update('table')
+
     }, 0);
+  }
+
+  adjustHeightByRowspan() {
+    const rows = Array.from(this.domNode.getElementsByTagName('tr'));
+
+    rows.forEach(row => {
+      row.style.height = '0px';
+    });
+
+    rows.forEach((row, index) => {
+      const tdsWithRowspan = Array.from(row.getElementsByTagName('td'))
+        .filter(td => {
+          const rs = parseInt(td.getAttribute('rowspan') || '1');
+          return rs > 1;
+        });
+
+      if (tdsWithRowspan.length === 0) return;
+
+      const largestRowspanTd = tdsWithRowspan.reduce((largest, currentTd) => {
+        const current = parseInt(currentTd.getAttribute('rowspan'));
+        const largestValue = parseInt(largest.getAttribute('rowspan'));
+        return current > largestValue ? currentTd : largest;
+      });
+
+      const largestRowspanTdRect = largestRowspanTd.getBoundingClientRect();
+      const targetRow = rows.find(row => {
+        const rect = row.getBoundingClientRect();
+        return Math.abs(rect.bottom - largestRowspanTdRect.bottom) < 0.5;
+      });
+
+      if (targetRow) {
+        targetRow.style.height = '';
+        targetRow.style.height = `${targetRow.offsetHeight}px`;
+      }
+    });
   }
 
   applyStylesToTable() {
@@ -1170,7 +1210,7 @@ class TableContainer extends Container {
     const tableModule = quill.getModule("better-table-plus")
     this.remove()
     tableModule.hideTableTools()
-    quill.update(Quill.sources.USER)
+    quill.update('table')
   }
 
   insertCell(tableRow, ref) {
