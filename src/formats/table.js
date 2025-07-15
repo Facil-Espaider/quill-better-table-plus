@@ -872,7 +872,10 @@ class TableContainer extends Container {
         }
       }
 
+      this.normalizeRowspans();
       this.adjustHeightByRowspan();
+      const quill = Quill.find(this.scroll.domNode.parentNode);
+      quill.update('table');
     }, 0);
     super.optimize(context);
   }
@@ -895,20 +898,19 @@ class TableContainer extends Container {
       const larguraTotal = elEditorSections.getBoundingClientRect().width;
       const containerWidth = Math.floor(larguraTotal - paddingLeft - paddingRight);
       if (tableWidth > containerWidth) {
-            const scale = containerWidth / tableWidth;
-            //tableWidth = 0;
-            cols.forEach(col => {
-                const colWidth = parseFloat(col.domNode.width, 10);
-                const newColWidth = colWidth * scale;
-                col.domNode.width = newColWidth + "px";
-                //tableWidth += newColWidth;
-            });
-        }
+        const scale = containerWidth / tableWidth;
+        //tableWidth = 0;
+        cols.forEach(col => {
+          const colWidth = parseFloat(col.domNode.width, 10);
+          const newColWidth = colWidth * scale;
+          col.domNode.width = newColWidth + "px";
+          //tableWidth += newColWidth;
+        });
+      }
 
         //this.domNode.style.width  = `${tableWidth}px`;
-        const quill = Quill.find(this.scroll.domNode.parentNode)
-        quill.update('table')
-
+        const quill = Quill.find(this.scroll.domNode.parentNode);
+        quill.update('table');
     }, 0);
   }
 
@@ -945,6 +947,90 @@ class TableContainer extends Container {
         targetRow.style.height = `${targetRow.offsetHeight}px`;
       }
     });
+  }
+
+  normalizeRowspans() {
+    const tbody = this.domNode.querySelector('tbody');
+    if (!tbody) return;
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    let index = 0;
+    let removeRows = 0;
+
+    while (index < rows.length) {
+      let rowSpanInvade = 0;
+      const row = rows[index];
+      const tds = Array.from(row.querySelectorAll('td'));
+      const tdsForAdjustment = [...tds];
+      const rowspans = tds.map(td => parseInt(td.getAttribute('rowspan') || '1'));
+      if (rowspans.length === 0) {
+        index++;
+        continue;
+      }
+
+      const smallestRowspan = Math.min(...rowspans);
+      if (smallestRowspan > 1) {
+        const maxTdsInLine = rows.reduce((max, row) => {
+          const cells = row.querySelectorAll('td, th');
+          return Math.max(max, cells.length);
+        }, 0);
+
+        let countAffectedCell = tds.reduce((sum, td) => {
+          const colspan = parseInt(td.getAttribute('colspan') || '1');
+          return sum + colspan;
+        }, 0);
+
+        for (let rowPrevious = index - 1; rowPrevious >= 0; rowPrevious--) {
+          if (!rows[rowPrevious]) continue;
+
+          const cells = Array.from(rows[rowPrevious].querySelectorAll('td'));
+          cells.forEach(td => {
+            let tdRowspan = parseInt(td.getAttribute('rowspan') || '1');
+            if ((rowPrevious + tdRowspan - 1) > index) {
+              tdsForAdjustment.push(td);
+              countAffectedCell += parseInt(td.getAttribute('colspan') || '1');
+              rowSpanInvade = ((rowPrevious + tdRowspan - 1) - index) < rowSpanInvade ||  rowSpanInvade === 0 ? ((rowPrevious + tdRowspan - 1) - index) : rowSpanInvade;
+            } else{
+              const isAdjacent = tds.some(tdCurrent => this.areTdsAdjacentHorizontally(td, tdCurrent));
+
+              if (isAdjacent) {
+                countAffectedCell += parseInt(td.getAttribute('colspan') || '1');
+              }
+            }
+          });
+          if (countAffectedCell >= maxTdsInLine) break;
+        }
+
+        if (rowSpanInvade > 0){
+          removeRows += rowSpanInvade;
+          tdsForAdjustment.forEach(td => {
+            let tdRowspan = parseInt(td.getAttribute('rowspan') || '1');
+            const blot = Quill.find(td);
+            if (blot) {
+              blot.format('rowspan', tdRowspan - rowSpanInvade);
+            }
+          });
+        }
+        
+      }
+      index += smallestRowspan;
+    }
+
+    rows.forEach(row => {
+      const hasCells = row.querySelector('td, th');
+      if (!hasCells && removeRows > 0) {
+        row.remove();
+        removeRows--;
+      }
+    });
+  }
+
+  areTdsAdjacentHorizontally(td1, td2, tolerance = 2) {
+    const rect1 = td1.getBoundingClientRect();
+    const rect2 = td2.getBoundingClientRect();
+    const horizontalGap = rect2.left - rect1.right;
+
+    return horizontalGap >= 0 && horizontalGap <= tolerance;
   }
 
   applyStylesToTable() {

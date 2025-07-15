@@ -140,19 +140,30 @@ const MENU_ITEMS_DEFAULT = {
     handler() {
       const tableContainer = Quill.find(this.table)
       // compute merged Cell rowspan, equal to length of selected rows
-      const rowspan = tableContainer.rows().reduce((sum, row) => {
-        let rowRect = getRelativeRect(
-          row.domNode.getBoundingClientRect(),
-          this.quill.root.parentNode
-        )
-        if (
-          rowRect.y >= this.boundary.y - ERROR_LIMIT &&
-          rowRect.y + rowRect.height <= this.boundary.y + this.boundary.height + ERROR_LIMIT
-        ) {
-          sum += 1
+      let rowsSkipped = 0;
+      let totalRowspan = 0;
+      let lastRowCode = "";
+
+      this.selectedTds.forEach(cell => {
+        const rowCode = cell.domNode.getAttribute('data-row');
+
+        if (rowCode !== lastRowCode && rowsSkipped > 0) {
+          rowsSkipped--;
+          return;
         }
-        return sum
-      }, 0)
+
+        if (rowCode === lastRowCode) return;
+
+        const sameRowCells = this.selectedTds.filter(td => {
+          return td.domNode.getAttribute('data-row') === rowCode;
+        });
+
+        const maxRowspan = Math.max(...sameRowCells.map(td => parseInt(td.formats()?.rowspan || 1)));
+
+        totalRowspan += maxRowspan;
+        rowsSkipped = maxRowspan - 1;
+        lastRowCode = rowCode;
+      });
 
       // compute merged cell colspan, equal to length of selected cols
       const colspan = this.columnToolCells.reduce((sum, cell) => {
@@ -172,7 +183,7 @@ const MENU_ITEMS_DEFAULT = {
       const mergedCell = tableContainer.mergeCells(
         this.boundary,
         this.selectedTds,
-        rowspan,
+        totalRowspan,
         colspan,
         this.quill.root.parentNode
       )
