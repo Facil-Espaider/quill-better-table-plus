@@ -783,7 +783,7 @@ class TableCol extends Block {
     COL_ATTRIBUTES.forEach(attrName => {
       if (attrName === "width" && value[attrName] && !value[attrName].contains("px"))
         value[attrName] += "px";
-
+      
       node.setAttribute(`${attrName}`, value[attrName] || COL_DEFAULT[attrName])
     })
     return node
@@ -834,6 +834,12 @@ class TableContainer extends Container {
 
   optimize(context){
     setTimeout(() => {
+      const [body] = this.descendants(TableBody);
+      if (!body?.children?.head) {
+        this.tableDestroy();
+        return;
+      }
+
       let colGroup = this.domNode.querySelectorAll('colgroup');
       if (colGroup.length === 0) {
         colGroup = document.createElement('colgroup');
