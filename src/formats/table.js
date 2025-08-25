@@ -781,9 +781,12 @@ class TableCol extends Block {
   static create(value) {
     let node = super.create(value)
     COL_ATTRIBUTES.forEach(attrName => {
-      if (attrName === "width" && value[attrName] && !value[attrName].contains("px"))
-        value[attrName] += "px";
-      
+      if (attrName === "width" && value[attrName]) {
+        let num = parseFloat(value[attrName].toString().replace('px', ''));
+        if (!isNaN(num)) {
+          value[attrName] = num.toFixed(2) + "px";
+        }
+      } 
       node.setAttribute(`${attrName}`, value[attrName] || COL_DEFAULT[attrName])
     })
     return node
@@ -853,9 +856,13 @@ class TableContainer extends Container {
           }
         });
       
+        let newWidth = this.domNode.parentNode.getBoundingClientRect().width / maxTdCount;
         for (let i = 0; i < maxTdCount; i++) {
           let col = document.createElement('col');
-          col.setAttribute('width', '100');
+          col.setAttribute('width', newWidth.toFixed(2) + 'px');
+          col.setAttribute('table_left_indent', 0);
+          col.setAttribute('table_alignment', 0);
+          col.setAttribute('table_preferred_width', 0);
           colGroup.appendChild(col);
         }
       
@@ -907,16 +914,22 @@ class TableContainer extends Container {
         const scale = containerWidth / tableWidth;
         //tableWidth = 0;
         cols.forEach(col => {
-          const colWidth = parseFloat(col.domNode.width, 10);
+          const colWidth = parseFloat(col.domNode.width);
           const newColWidth = colWidth * scale;
-          col.domNode.width = newColWidth + "px";
+          col.domNode.width = newColWidth.toFixed(2) + "px";
+          col.format('width', newColWidth.toFixed(2) + "px");
           //tableWidth += newColWidth;
+        });
+      } else {
+        cols.forEach(col => {
+          const colWidth = col.domNode.width;
+          col.format('width', colWidth);
         });
       }
 
-        //this.domNode.style.width  = `${tableWidth}px`;
-        const quill = Quill.find(this.scroll.domNode.parentNode);
-        quill.update('table');
+      //this.domNode.style.width  = `${tableWidth}px`;
+      const quill = Quill.find(this.scroll.domNode.parentNode);
+      quill.update('table');
     }, 0);
   }
 
@@ -1056,6 +1069,8 @@ class TableContainer extends Container {
         this.setTableAlignment(tableAlignment);
         this.fixCellBorderPriority();
       }
+      const quill = Quill.find(this.scroll.domNode.parentNode);
+      quill.update('table');
     }, 0);
   }
 
