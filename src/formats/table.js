@@ -904,7 +904,7 @@ class TableContainer extends Container {
         return sumWidth;
       }, 0)
 
-      const elEditorSections = document.getElementsByClassName('ql-editor editor-sections')[0];
+      const elEditorSections = document.getElementsByClassName('ql-editor')[0];
       const styleEditorSections = window.getComputedStyle(elEditorSections);
       const paddingLeft = parseFloat(styleEditorSections.paddingLeft);
       const paddingRight = parseFloat(styleEditorSections.paddingRight);
