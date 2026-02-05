@@ -937,7 +937,9 @@ class TableContainer extends Container {
     const rows = Array.from(this.domNode.getElementsByTagName('tr'));
 
     rows.forEach(row => {
-      row.style.height = '0px';
+      if(row.getAttribute('data-row_height') === '0') {
+        row.style.height = '0px';
+      }
     });
 
     rows.forEach((row, index) => {
@@ -1627,7 +1629,41 @@ class TableContainer extends Container {
       cellLine.format('rowspan', rowspan)
     })
 
+    this.removeEmptyRowsAndAdjustRowspansByRect();
     return mergedCell
+  }
+
+  removeEmptyRowsAndAdjustRowspansByRect() {
+    const tbody = this.domNode.querySelector('tbody');
+    if (!tbody) return;
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    rows.forEach(row => {
+      const hasCells = row.querySelector('td, th');
+      if (hasCells) return;
+
+      const rowRect = row.getBoundingClientRect();
+      const allTds = Array.from(tbody.querySelectorAll('td'));
+
+      allTds.forEach(td => {
+        const tdRect = td.getBoundingClientRect();
+        const verticalOverlap =
+          tdRect.top < rowRect.bottom && tdRect.bottom > rowRect.top;
+
+        if (verticalOverlap) {
+          const rowspan = parseInt(td.getAttribute('rowspan') || '1');
+          if (rowspan > 1) {
+            const newRowspan = rowspan - 1;
+            const blot = Quill.find(td);
+            if (blot) blot.format('rowspan', newRowspan);
+            else td.setAttribute('rowspan', newRowspan);
+          }
+        }
+      });
+
+      row.remove();
+    });
   }
 
   unmergeCells(unmergingCells, editorWrapper) {

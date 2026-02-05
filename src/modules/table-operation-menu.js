@@ -275,6 +275,7 @@ const MENU_COLORS = {
       if (selectedTds && selectedTds.length > 0) {
         selectedTds.forEach(tableCell => {
           tableCell.format('cell-bg', color)
+          this.quill.update('table')
         })
       }
     },
