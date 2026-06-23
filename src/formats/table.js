@@ -897,37 +897,72 @@ class TableContainer extends Container {
     setTimeout(() => {
       const colGroup = this.colGroup();
       if (!colGroup) return;
+
+      // largura natural da tabela = soma das larguras das colunas (px)
       var cols = [];
       let tableWidth = colGroup.children.reduce((sumWidth, col) => {
-          sumWidth = sumWidth + parseFloat(col.formats()[TableCol.blotName].width);
-          cols.add(col);
+        sumWidth = sumWidth + (parseFloat(col.formats()[TableCol.blotName].width) || 0);
+        cols.push(col);
         return sumWidth;
-      }, 0)
+      }, 0);
 
-      const elEditorSections = document.getElementsByClassName('ql-editor')[0];
-      const styleEditorSections = window.getComputedStyle(elEditorSections);
-      const paddingLeft = parseFloat(styleEditorSections.paddingLeft);
-      const paddingRight = parseFloat(styleEditorSections.paddingRight);
-      const larguraTotal = elEditorSections.getBoundingClientRect().width;
-      const containerWidth = Math.floor(larguraTotal - paddingLeft - paddingRight);
-      if (tableWidth > containerWidth) {
-        const scale = containerWidth / tableWidth;
-        //tableWidth = 0;
+      const elEditor = document.getElementsByClassName('ql-editor')[0];
+      if (!elEditor) return;
+      const stEditor = window.getComputedStyle(elEditor);
+      const paddingLeft = parseFloat(stEditor.paddingLeft) || 0;
+      const paddingRight = parseFloat(stEditor.paddingRight) || 0;
+      const pageWidth = elEditor.getBoundingClientRect().width;        // border-box (inclui padding)
+      const contentWidth = Math.floor(pageWidth - paddingLeft - paddingRight);
+
+      const firstCol = colGroup.children.head;
+      const colFmt = (firstCol && firstCol.formats) ? firstCol.formats()[TableCol.blotName] : {};
+      const alignment = colFmt.table_alignment;
+      const isLeft = (alignment === 0 || alignment === '0' || alignment == null);
+      const indentPx = (parseFloat(colFmt.table_left_indent) || 0) * (4 / 3);   // recuo (pt->px)
+
+      const wrapper = this.domNode.parentNode;
+      const scaleCols = (factor) => {
         cols.forEach(col => {
-          const colWidth = parseFloat(col.domNode.width);
-          const newColWidth = colWidth * scale;
-          col.domNode.width = newColWidth.toFixed(2) + "px";
-          col.format('width', newColWidth.toFixed(2) + "px");
-          //tableWidth += newColWidth;
+          const w = (parseFloat(col.domNode.width) || 0) * factor;
+          col.domNode.width = w.toFixed(2) + 'px';
+          col.format('width', w.toFixed(2) + 'px');
         });
+      };
+
+      if (isLeft) {
+        // Borda esquerda da tabela relativa ao inicio do conteudo (= recuo do Word).
+        // Negativo sangra para a margem esquerda; positivo desloca para a direita.
+        // Limita para nao passar da borda esquerda da pagina (overflow:hidden corta).
+        let leftEdge = indentPx;
+        if (leftEdge < -paddingLeft) leftEdge = -paddingLeft;
+
+        // A borda direita da tabela NAO passa do CONTEUDO (margem direita): so sangra a
+        // ESQUERDA (recuo negativo, como no Word). Tabela larga demais e reduzida para
+        // caber dentro das margens normais — e o "auto-fit ao conteudo" que o Word faz.
+        const available = contentWidth - leftEdge;
+        let finalWidth = tableWidth;
+        if (tableWidth > available && tableWidth > 0) {
+          scaleCols(available / tableWidth);
+          finalWidth = available;
+        } else {
+          cols.forEach(col => col.format('width', col.domNode.width));
+        }
+
+        // Posiciona/dimensiona o WRAPPER (overflow:hidden) para conter exatamente a tabela.
+        wrapper.style.width = finalWidth.toFixed(2) + 'px';
+        if (Math.abs(leftEdge) > 0.01) wrapper.style.marginLeft = leftEdge.toFixed(2) + 'px';
+        else wrapper.style.removeProperty('margin-left');
       } else {
-        cols.forEach(col => {
-          const colWidth = col.domNode.width;
-          col.format('width', colWidth);
-        });
+        // Centro/direita: comportamento anterior (cabe no conteudo; classes posicionam).
+        if (tableWidth > contentWidth && tableWidth > 0) {
+          scaleCols(contentWidth / tableWidth);
+        } else {
+          cols.forEach(col => col.format('width', col.domNode.width));
+        }
+        wrapper.style.removeProperty('width');
+        wrapper.style.removeProperty('margin-left');
       }
 
-      //this.domNode.style.width  = `${tableWidth}px`;
       const quill = Quill.find(this.scroll.domNode.parentNode);
       quill.update('table');
     }, 0);
@@ -1064,10 +1099,10 @@ class TableContainer extends Container {
       if (firstCol && firstCol.formats) {
         const formats = firstCol.formats();
 
-        const tableMarginLeft = formats[TableCol.blotName].table_left_indent;
         const tableAlignment = formats[TableCol.blotName].table_alignment;
 
-        this.setTableMarginLeft(tableMarginLeft);
+        // Recuo (table_left_indent) e largura sao tratados juntos em updateTableWidth
+        // (posicao + tamanho no wrapper). Aqui so alinhamento e bordas.
         this.setTableAlignment(tableAlignment);
         this.fixCellBorderPriority();
       }
@@ -1128,12 +1163,6 @@ class TableContainer extends Container {
             this.formatCellBorderTopAndBottom(cellChange, formatBorder === 'cell_bbc' ? 'cell_btc' : 'cell_bbc', true)
         }
       }
-  }
-
-  setTableMarginLeft(tableMarginLeft) {
-    if (tableMarginLeft) {
-      this.domNode.style.setProperty('margin-left', ''.concat(tableMarginLeft, 'pt'));
-    }
   }
 
   setTableAlignment(tableAlignment) {
