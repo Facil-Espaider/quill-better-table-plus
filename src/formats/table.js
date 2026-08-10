@@ -936,10 +936,12 @@ class TableContainer extends Container {
         let leftEdge = indentPx;
         if (leftEdge < -paddingLeft) leftEdge = -paddingLeft;
 
-        // A borda direita da tabela NAO passa do CONTEUDO (margem direita): so sangra a
-        // ESQUERDA (recuo negativo, como no Word). Tabela larga demais e reduzida para
-        // caber dentro das margens normais — e o "auto-fit ao conteudo" que o Word faz.
-        const available = contentWidth - leftEdge;
+        // A tabela pode sangrar para DENTRO das margens dos DOIS lados, como no Word: o
+        // limite e a borda fisica da pagina, nao o fim da area de conteudo. O overflow:hidden
+        // do .ql-editor recorta na PADDING BOX, entao o que invade a margem direita continua
+        // visivel — mesma razao pela qual o recuo negativo ja sangra a esquerda ate -paddingLeft.
+        // So se nao couber nem assim a tabela e reduzida (o "auto-fit" que o Word faz).
+        const available = contentWidth + paddingRight - leftEdge;
         let finalWidth = tableWidth;
         if (tableWidth > available && tableWidth > 0) {
           scaleCols(available / tableWidth);
